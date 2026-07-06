@@ -1,0 +1,142 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model User {
+  id          String    @id @default(cuid())
+  googleId    String    @unique
+  name        String?
+  email       String    @unique
+  image       String?
+  totalPoints Int       @default(0)
+  daysCleared Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  gameSessions        GameSession[]
+  scores              Score[]
+  communityChallenge  CommunityChallenge[]
+  arenaSessions       ArenaSession[]
+}
+
+enum Tier {
+  BASIC
+  ADVANCED
+}
+
+model Level {
+  id          String   @id @default(cuid())
+  dayNumber   Int      @unique
+  title       String
+  description String
+  mission     String
+  basePoints  Int
+  tier        Tier
+  order       Int
+
+  systemPrompt  SystemPrompt?
+  hints         Hint[]
+  gameSessions  GameSession[]
+  scores        Score[]
+}
+
+model SystemPrompt {
+  id           String   @id @default(cuid())
+  levelId      String   @unique
+  systemPrompt String
+  secretAnswer String
+  defenses     String
+
+  level Level @relation(fields: [levelId], references: [id])
+}
+
+model Hint {
+  id           String @id @default(cuid())
+  levelId      String
+  content      String
+  order        Int
+  pointPenalty Int
+
+  level Level @relation(fields: [levelId], references: [id])
+}
+
+model GameSession {
+  id          String    @id @default(cuid())
+  userId      String?
+  anonymousId String?
+  levelId     String
+  tries       Int       @default(0)
+  hintsUsed   Int       @default(0)
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  cleared     Boolean   @default(false)
+
+  user     User?         @relation(fields: [userId], references: [id])
+  level    Level         @relation(fields: [levelId], references: [id])
+  messages ChatMessage[]
+}
+
+enum Role {
+  USER
+  ASSISTANT
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  sessionId String
+  role      Role
+  content   String
+  createdAt DateTime @default(now())
+
+  session GameSession @relation(fields: [sessionId], references: [id])
+}
+
+model Score {
+  id              String   @id @default(cuid())
+  userId          String?
+  anonymousId     String?
+  levelId         String
+  totalPoints     Int
+  basePoints      Int
+  timeBonus       Int      @default(0)
+  triesBonus      Int      @default(0)
+  cleanSolveBonus Int      @default(0)
+  hintPenalty     Int      @default(0)
+  timeTaken       Int
+  createdAt       DateTime @default(now())
+
+  user  User?  @relation(fields: [userId], references: [id])
+  level Level  @relation(fields: [levelId], references: [id])
+}
+
+model CommunityChallenge {
+  id           String   @id @default(cuid())
+  authorId     String
+  systemPrompt String
+  secretAnswer String
+  title        String
+  description  String?
+  timesPlayed  Int      @default(0)
+  timesSolved  Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  author        User           @relation(fields: [authorId], references: [id])
+  arenaSessions ArenaSession[]
+}
+
+model ArenaSession {
+  id          String   @id @default(cuid())
+  challengeId String
+  userId      String?
+  anonymousId String?
+  tries       Int      @default(0)
+  cleared     Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  challenge CommunityChallenge @relation(fields: [challengeId], references: [id])
+  user      User?              @relation(fields: [userId], references: [id])
+}
