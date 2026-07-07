@@ -5,6 +5,74 @@ const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 30;
 const RATE_WINDOW = 60_000;
 
+/**
+ * Strip chain-of-thought (COT) reasoning từ reply của AI.
+ * Nhiều free model (Gemma, DeepSeek...) trả reasoning lẫn trong content.
+ * COT thường bắt đầu bằng "Okay, let's...", "Let me think...", v.v.
+ * và chứa nguyên văn bí mật trong reasoning → cần loại bỏ.
+ */
+function stripChainOfThought(raw: string): string {
+  // 1. Nếu có reasoning_content riêng (DeepSeek R1), content đã sạch → giữ nguyên.
+  //    Hàm này chỉ xử lý trường hợp COT nằm LẪN trong content.
+
+  // 2. Tìm đoạn text tiếng Việt cuối cùng sau khối COT tiếng Anh.
+  //    Pattern: COT thường bằng tiếng Anh, reply thật bằng tiếng Việt.
+
+  // Nếu reply bắt đầu bằng các marker COT phổ biến
+  const cotStartPatterns = [
+    /^Okay,\s+(let's|the user|so|I|we|this)/i,
+    /^Let me\s+(think|check|recall|see|analyze)/i,
+    /^First,?\s+I\s+(need|should|must|have|want|remember)/i,
+    /^The user\s+(is|wants|asked)/i,
+    /^I\s+(need to|should|must|know|remember|have to)\s+/i,
+    /^We\s+need to\s+/i,
+    /^According to\s+/i,
+    /^Looking at\s+/i,
+    /^Wait,/i,
+    /^Hmm,/i,
+    /^So,?\s+(the|my|I|let)/i,
+    /^Now,?\s+(I|let|the)/i,
+    /^<think>/i,
+  ];
+
+  const hasCotStart = cotStartPatterns.some((p) => p.test(raw.trim()));
+  if (!hasCotStart) return raw; // Không có COT → giữ nguyên
+
+  // Thử tách: tìm đoạn tiếng Việt cuối cùng (sau block reasoning)
+  // Nhiều model kết thúc COT rồi viết reply tiếng Việt phân cách bằng \n\n
+  const parts = raw.split(/\n{2,}/);
+
+  // Tìm phần cuối cùng có chứa tiếng Việt (dấu: à, á, ả, ã, ạ, ă, â, đ, ê, ô, ơ, ư...)
+  const vietnamesePattern = /[àáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđĐ]/;
+
+  // Từ cuối lên, tìm block tiếng Việt đầu tiên
+  let vnStartIdx = -1;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (vietnamesePattern.test(parts[i]) && parts[i].trim().length > 20) {
+      vnStartIdx = i;
+      // Tiếp tục lên trên nếu các block liên tiếp cũng là tiếng Việt
+      while (vnStartIdx > 0 && vietnamesePattern.test(parts[vnStartIdx - 1])) {
+        vnStartIdx--;
+      }
+      break;
+    }
+  }
+
+  if (vnStartIdx > 0) {
+    // Có block tiếng Việt sau COT → lấy từ đó trở đi
+    return parts.slice(vnStartIdx).join("\n\n").trim();
+  }
+
+  // Fallback: nếu không tách được rõ ràng, strip <think>...</think> block
+  const thinkStripped = raw.replace(/<think>[\s\S]*?<\/think>/gi, "").trim();
+  if (thinkStripped.length > 20 && thinkStripped !== raw.trim()) {
+    return thinkStripped;
+  }
+
+  // Nếu vẫn không tách được → trả nguyên (tốt hơn là mất reply)
+  return raw;
+}
+
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(ip);
@@ -85,7 +153,8 @@ export async function POST(request: NextRequest) {
         temperature: 0.7,
       });
 
-      const reply = completion.choices[0]?.message?.content ?? "...";
+      const rawReply = completion.choices[0]?.message?.content ?? "...";
+      const reply = stripChainOfThought(rawReply);
       return NextResponse.json({ reply });
     } catch (err: unknown) {
       lastErrorStatus = (err as { status?: number })?.status;
