@@ -2,7 +2,9 @@ function normalize(str: string): string {
   return str
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s]/g, "")
+    // Giữ lại chữ cái Unicode (tiếng Việt), số, khoảng trắng.
+    // \p{L} = chữ cái mọi ngôn ngữ, \p{N} = số. Flag 'u' bật Unicode.
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
     .replace(/\s+/g, " ");
 }
 
