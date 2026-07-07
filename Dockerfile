@@ -16,9 +16,15 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # Generate Prisma client (output: src/generated/prisma) — bị gitignore nên phải sinh lại
 RUN npx prisma generate
+# Tạo DB tạm để next build prerender các trang cần query DB (vd /levels)
+# DB này chỉ dùng lúc build, runtime sẽ dùng volume /data
+ENV DATABASE_URL=file:./build.db
+RUN npx prisma db push && npx prisma db seed
 # Build Next.js standalone
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
+# Xoá DB tạm (không mang vào runner)
+RUN rm -f build.db
 
 # ---------- Stage 3: runner ----------
 FROM node:22-slim AS runner
