@@ -8,8 +8,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Pha Prompt",
-  description: "Prompt Injection CTF Game",
+  title: "BreakPrompt",
+  description: "Trò chơi CTF tiêm nhiễm prompt",
 };
 
 export default function RootLayout({

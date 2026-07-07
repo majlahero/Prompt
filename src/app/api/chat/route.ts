@@ -45,18 +45,25 @@ export async function POST(request: NextRequest) {
 
   if (!apiKey) {
     const mockReplies = [
-      "I appreciate your curiosity, but I'm afraid I can't help with that.",
-      "That's an interesting question! However, I must maintain my protocols.",
-      "I understand what you're trying to do, but my instructions are clear.",
-      "Nice try! But I'm well-trained to protect this information.",
-      "I'd love to chat about something else. What else is on your mind?",
+      "Tôi trân trọng sự tò mò của bạn, nhưng e rằng tôi không thể giúp việc đó.",
+      "Câu hỏi thú vị đấy! Tuy nhiên, tôi phải tuân thủ nguyên tắc của mình.",
+      "Tôi hiểu bạn đang cố làm gì, nhưng chỉ thị của tôi rất rõ ràng.",
+      "Cố gắng tốt lắm! Nhưng tôi được huấn luyện kỹ để bảo vệ thông tin này.",
+      "Tôi rất muốn trò chuyện về chuyện khác. Bạn còn điều gì trong đầu nữa không?",
     ];
     const reply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
     return NextResponse.json({ reply });
   }
 
   const { default: OpenAI } = await import("openai");
-  const openai = new OpenAI({ apiKey });
+  const baseURL = process.env.OPENAI_BASE_URL || undefined;
+  // OPENAI_MODEL: danh sách model phân tách bằng dấu phẩy. Thử lần lượt từ trên xuống,
+  // model nào lỗi (vd 429 rate-limit) thì tự động chuyển sang model kế tiếp.
+  const models = (process.env.OPENAI_MODEL || "gpt-4o-mini")
+    .split(",")
+    .map((m) => m.trim())
+    .filter(Boolean);
+  const openai = new OpenAI({ apiKey, baseURL });
 
   const messages = [
     { role: "system" as const, content: systemPromptRecord.systemPrompt },
@@ -67,14 +74,30 @@ export async function POST(request: NextRequest) {
     { role: "user" as const, content: message },
   ];
 
-  const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
-    messages,
-    max_tokens: 500,
-    temperature: 0.7,
-  });
+  // Duyệt lần lượt danh sách model: model lỗi thì rơi xuống model kế tiếp.
+  let lastErrorStatus: number | undefined;
+  for (const model of models) {
+    try {
+      const completion = await openai.chat.completions.create({
+        model,
+        messages,
+        max_tokens: 500,
+        temperature: 0.7,
+      });
 
-  const reply = completion.choices[0]?.message?.content ?? "...";
+      const reply = completion.choices[0]?.message?.content ?? "...";
+      return NextResponse.json({ reply });
+    } catch (err: unknown) {
+      lastErrorStatus = (err as { status?: number })?.status;
+      console.error(`[chat] model "${model}" lỗi (status ${lastErrorStatus}), thử model kế tiếp...`);
+      // Thử model tiếp theo trong danh sách.
+    }
+  }
 
-  return NextResponse.json({ reply });
+  // Tất cả model đều lỗi.
+  const reply =
+    lastErrorStatus === 429
+      ? "[HỆ THỐNG] Tất cả AI đang quá tải (rate limit). Thử lại sau vài giây..."
+      : "[HỆ THỐNG] Lỗi kết nối tới AI. Thử lại sau.";
+  return NextResponse.json({ reply }, { status: 200 });
 }

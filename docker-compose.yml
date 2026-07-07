@@ -11,6 +11,8 @@ services:
       - DATABASE_URL=file:/data/prod.db
       # Chat sẽ chạy mock nếu không set OPENAI_API_KEY. Điền vào .env để dùng LLM thật.
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_BASE_URL=${OPENAI_BASE_URL:-}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4o-mini}
       # NextAuth (nếu bật auth sau này)
       - AUTH_SECRET=${AUTH_SECRET:-}
       - AUTH_URL=${AUTH_URL:-https://trochoi.id.vn}

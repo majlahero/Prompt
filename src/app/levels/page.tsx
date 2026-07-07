@@ -33,16 +33,16 @@ export default async function LevelsPage() {
       <div className="mx-auto max-w-6xl">
         <pre className="text-terminal-green text-xs mb-2 select-none">
 {`
- ██████╗██╗  ██╗ ██████╗  ██████╗ ███████╗███████╗    ██╗   ██╗ ██████╗ ██╗   ██╗██████╗
-██╔════╝██║  ██║██╔═══██╗██╔═══██╗██╔════╝██╔════╝    ╚██╗ ██╔╝██╔═══██╗██║   ██║██╔══██╗
-██║     ███████║██║   ██║██║   ██║███████╗█████╗       ╚████╔╝ ██║   ██║██║   ██║██████╔╝
-██║     ██╔══██║██║   ██║██║   ██║╚════██║██╔══╝        ╚██╔╝  ██║   ██║██║   ██║██╔══██╗
-╚██████╗██║  ██║╚██████╔╝╚██████╔╝███████║███████╗       ██║   ╚██████╔╝╚██████╔╝██║  ██║
- ╚═════╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚══════╝╚══════╝       ╚═╝    ╚═════╝  ╚═════╝ ╚═╝  ╚═╝
+ ██████╗██╗  ██╗ ██████╗ ███╗   ██╗    ███╗   ██╗ ██████╗  █████╗ ██╗   ██╗
+██╔════╝██║  ██║██╔═══██╗████╗  ██║    ████╗  ██║██╔════╝ ██╔══██╗╚██╗ ██╔╝
+██║     ███████║██║   ██║██╔██╗ ██║    ██╔██╗ ██║██║  ███╗███████║ ╚████╔╝
+██║     ██╔══██║██║   ██║██║╚██╗██║    ██║╚██╗██║██║   ██║██╔══██║  ╚██╔╝
+╚██████╗██║  ██║╚██████╔╝██║ ╚████║    ██║ ╚████║╚██████╔╝██║  ██║   ██║
+ ╚═════╝╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═══╝    ╚═╝  ╚═══╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝
 `}
         </pre>
         <p className="text-terminal-dim text-sm tracking-widest uppercase mb-8">
-          &gt;_ select a day to begin your mission
+          &gt;_ chọn một ngày để bắt đầu nhiệm vụ
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -54,7 +54,7 @@ export default async function LevelsPage() {
             >
               <div className="flex items-center justify-between mb-2">
                 <span className="text-terminal-green text-xs tracking-widest">
-                  DAY {String(level.dayNumber).padStart(2, "0")}
+                  NGÀY {String(level.dayNumber).padStart(2, "0")}
                 </span>
                 <span
                   className={`text-[0.6rem] px-2 py-0.5 border ${
@@ -63,7 +63,7 @@ export default async function LevelsPage() {
                       : "border-terminal-dim text-terminal-dim"
                   }`}
                 >
-                  {level.tier}
+                  {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
                 </span>
               </div>
 
@@ -77,10 +77,10 @@ export default async function LevelsPage() {
 
               <div className="flex items-center justify-between">
                 <span className="text-terminal-amber text-xs">
-                  {level.basePoints} PTS
+                  {level.basePoints} ĐIỂM
                 </span>
                 <span className="text-terminal-dim text-xs group-hover:text-terminal-green transition-colors">
-                  [ENTER] &gt;
+                  [VÀO] &gt;
                 </span>
               </div>
             </Link>
@@ -92,7 +92,7 @@ export default async function LevelsPage() {
             href="/"
             className="text-terminal-dim text-xs hover:text-foreground transition-colors"
           >
-            &lt; BACK TO MAIN
+            &lt; VỀ TRANG CHỦ
           </Link>
         </div>
       </div>
