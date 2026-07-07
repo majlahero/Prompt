@@ -131,7 +131,9 @@ export async function POST(request: NextRequest) {
     .split(",")
     .map((m) => m.trim())
     .filter(Boolean);
-  const openai = new OpenAI({ apiKey, baseURL });
+  // timeout 15s/lần gọi + KHÔNG retry: tránh treo hàng phút khi model free chậm.
+  // (mặc định SDK là timeout 10 phút + 2 retry có backoff -> request treo rất lâu.)
+  const openai = new OpenAI({ apiKey, baseURL, timeout: 15_000, maxRetries: 0 });
 
   const messages = [
     { role: "system" as const, content: systemPromptRecord.systemPrompt },
@@ -143,8 +145,16 @@ export async function POST(request: NextRequest) {
   ];
 
   // Duyệt lần lượt danh sách model: model lỗi thì rơi xuống model kế tiếp.
+  // Deadline tổng 35s: không bao giờ để request treo quá lâu (Cloudflare timeout ~100s,
+  // và người chơi không chờ nổi). Hết deadline -> dừng, trả thông báo quá tải.
+  const DEADLINE_MS = 35_000;
+  const startedAt = Date.now();
   let lastErrorStatus: number | undefined;
   for (const model of models) {
+    if (Date.now() - startedAt > DEADLINE_MS) {
+      console.error("[chat] vượt deadline tổng 35s, dừng thử thêm model.");
+      break;
+    }
     try {
       const completion = await openai.chat.completions.create({
         model,
