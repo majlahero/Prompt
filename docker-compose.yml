@@ -21,30 +21,15 @@ services:
     networks:
       - web
 
-  nginx:
-    image: nginx:1.27-alpine
-    container_name: pha-prompt-nginx
+  tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: pha-prompt-tunnel
     restart: unless-stopped
     depends_on:
       - app
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - ./certbot/conf:/etc/letsencrypt:ro
-      - ./certbot/www:/var/www/certbot:ro
-    networks:
-      - web
-
-  # Chạy 1 lần để xin/renew cert. Xem DEPLOY.md.
-  certbot:
-    image: certbot/certbot:latest
-    container_name: pha-prompt-certbot
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    command: tunnel run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
     networks:
       - web
 
