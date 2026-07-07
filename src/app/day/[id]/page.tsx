@@ -184,7 +184,7 @@ export default function DayPage() {
             {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
           </span>
         </div>
-        <p className="text-terminal-dim text-sm leading-relaxed">{level.description}</p>
+        <p className="text-terminal-dim text-sm leading-relaxed">{level.mission}</p>
 
         {/* Stats bar */}
         <div className="flex gap-6 mt-3 text-xs">
@@ -199,7 +199,7 @@ export default function DayPage() {
       <div className="border border-terminal-green p-3 mb-4">
         <p className="text-terminal-green text-xs tracking-widest mb-1">TÓM TẮT NHIỆM VỤ</p>
         <p className="text-sm leading-relaxed">
-          {level.mission} Dùng khung chat để thẩm vấn. Nộp đáp án khi bạn đã sẵn sàng.
+          {level.description} Dùng khung chat để thẩm vấn. Nộp đáp án khi bạn đã sẵn sàng.
         </p>
       </div>
 
