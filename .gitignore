@@ -51,3 +51,8 @@ next-env.d.ts
 *.db-journal
 dev.db
 prisma/dev.db
+
+# auto-deploy webhook: secret + log + lock (KHÔNG commit)
+deploy/webhook.env
+deploy/deploy.log
+deploy/.deploy.lock

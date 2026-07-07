@@ -32,6 +32,9 @@ services:
     command: tunnel run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
+    # Cho phép cloudflared gọi ngược về webhook listener chạy trên host (auto-deploy).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - web
 

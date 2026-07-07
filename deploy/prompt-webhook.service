@@ -1,0 +1,17 @@
+[Unit]
+Description=Prompt GitHub webhook auto-deploy listener
+After=network.target docker.service
+Wants=docker.service
+
+[Service]
+Type=simple
+User=hoa
+Environment=HOME=/home/hoa
+WorkingDirectory=/home/hoa/Prompt
+EnvironmentFile=/home/hoa/Prompt/deploy/webhook.env
+ExecStart=/usr/bin/python3 /home/hoa/Prompt/deploy/webhook.py
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
