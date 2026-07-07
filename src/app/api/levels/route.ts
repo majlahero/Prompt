@@ -10,6 +10,7 @@ export async function GET() {
       title: true,
       description: true,
       mission: true,
+      answerPlaceholder: true,
       basePoints: true,
       tier: true,
     },

@@ -29,14 +29,15 @@ enum Tier {
 }
 
 model Level {
-  id          String   @id @default(cuid())
-  dayNumber   Int      @unique
-  title       String
-  description String
-  mission     String
-  basePoints  Int
-  tier        Tier
-  order       Int
+  id                String   @id @default(cuid())
+  dayNumber         Int      @unique
+  title             String
+  description       String
+  mission           String
+  answerPlaceholder String   @default("Nhập bí mật...")
+  basePoints        Int
+  tier              Tier
+  order             Int
 
   systemPrompt  SystemPrompt?
   hints         Hint[]

@@ -15,6 +15,7 @@ interface Level {
   title: string;
   description: string;
   mission: string;
+  answerPlaceholder: string;
   basePoints: number;
   tier: string;
 }
@@ -199,7 +200,7 @@ export default function DayPage() {
       <div className="border border-terminal-green p-3 mb-4">
         <p className="text-terminal-green text-xs tracking-widest mb-1">TÓM TẮT NHIỆM VỤ</p>
         <p className="text-sm leading-relaxed">
-          {level.description} Dùng khung chat để thẩm vấn. Nộp đáp án khi bạn đã sẵn sàng.
+          {level.description}
         </p>
       </div>
 
@@ -279,7 +280,7 @@ export default function DayPage() {
             onChange={(e) => setAnswerInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
             disabled={solved}
-            placeholder="Nhập bí mật..."
+            placeholder={level.answerPlaceholder}
             className="flex-1 bg-transparent text-sm outline-none placeholder:text-terminal-dim/50 disabled:opacity-50"
           />
           <button
