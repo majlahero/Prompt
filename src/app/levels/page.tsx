@@ -71,7 +71,7 @@ export default async function LevelsPage() {
                 {level.title}
               </h3>
 
-              <p className="text-terminal-dim text-xs leading-relaxed mb-3">
+              <p className="text-terminal-dim text-sm leading-relaxed mb-3">
                 {level.description}
               </p>
 

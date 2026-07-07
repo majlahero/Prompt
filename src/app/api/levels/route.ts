@@ -9,6 +9,7 @@ export async function GET() {
       dayNumber: true,
       title: true,
       description: true,
+      mission: true,
       basePoints: true,
       tier: true,
     },

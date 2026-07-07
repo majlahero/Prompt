@@ -14,6 +14,7 @@ interface Level {
   dayNumber: number;
   title: string;
   description: string;
+  mission: string;
   basePoints: number;
   tier: string;
 }
@@ -183,7 +184,7 @@ export default function DayPage() {
             {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
           </span>
         </div>
-        <p className="text-terminal-dim text-xs">{level.description}</p>
+        <p className="text-terminal-dim text-sm leading-relaxed">{level.description}</p>
 
         {/* Stats bar */}
         <div className="flex gap-6 mt-3 text-xs">
@@ -197,8 +198,8 @@ export default function DayPage() {
       {/* Mission Briefing */}
       <div className="border border-terminal-green p-3 mb-4">
         <p className="text-terminal-green text-xs tracking-widest mb-1">TÓM TẮT NHIỆM VỤ</p>
-        <p className="text-sm">
-          Moi bí mật từ PIP. Dùng khung chat để thẩm vấn. Nộp đáp án khi bạn đã sẵn sàng.
+        <p className="text-sm leading-relaxed">
+          {level.mission} Dùng khung chat để thẩm vấn. Nộp đáp án khi bạn đã sẵn sàng.
         </p>
       </div>
 
@@ -207,7 +208,7 @@ export default function DayPage() {
         <div className="border border-terminal-amber p-3 mb-4">
           <p className="text-terminal-amber text-xs tracking-widest mb-2">GỢI Ý ĐÃ MỞ</p>
           {hints.map((hint, i) => (
-            <p key={i} className="text-xs text-terminal-dim mb-1">
+            <p key={i} className="text-sm text-terminal-amber/90 mb-1">
               [{i + 1}] {hint.content} <span className="text-red-500">(-{hint.pointPenalty} điểm)</span>
             </p>
           ))}
@@ -271,7 +272,7 @@ export default function DayPage() {
       {/* Answer + Hint Row */}
       <div className="flex gap-4 mb-4">
         <div className="flex-1 border border-terminal-dim flex">
-          <span className="text-terminal-amber px-3 py-2 text-sm">ĐÁP&gt;</span>
+          <span className="text-terminal-amber px-3 py-2 text-sm">ĐÁP ÁN&gt;</span>
           <input
             type="text"
             value={answerInput}
