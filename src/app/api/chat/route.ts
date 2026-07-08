@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT = 30;
@@ -91,10 +92,11 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { levelId, message, history } = body as {
+  const { levelId, message, history, sessionId } = body as {
     levelId: string;
     message: string;
     history: { role: string; content: string }[];
+    sessionId?: string;
   };
 
   if (!levelId || !message) {
@@ -120,6 +122,18 @@ export async function POST(request: NextRequest) {
       "Tôi rất muốn trò chuyện về chuyện khác. Bạn còn điều gì trong đầu nữa không?",
     ];
     const reply = mockReplies[Math.floor(Math.random() * mockReplies.length)];
+    if (sessionId) {
+      try {
+        const authSession = await auth();
+        if (authSession?.user?.id) {
+          const gs = await prisma.gameSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
+          if (gs?.userId === authSession.user.id) {
+            await prisma.chatMessage.create({ data: { sessionId, role: "USER", content: message } });
+            await prisma.chatMessage.create({ data: { sessionId, role: "ASSISTANT", content: reply } });
+          }
+        }
+      } catch { /* non-critical */ }
+    }
     return NextResponse.json({ reply });
   }
 
@@ -165,6 +179,18 @@ export async function POST(request: NextRequest) {
 
       const rawReply = completion.choices[0]?.message?.content ?? "...";
       const reply = stripChainOfThought(rawReply);
+      if (sessionId) {
+        try {
+          const authSession = await auth();
+          if (authSession?.user?.id) {
+            const gs = await prisma.gameSession.findUnique({ where: { id: sessionId }, select: { userId: true } });
+            if (gs?.userId === authSession.user.id) {
+              await prisma.chatMessage.create({ data: { sessionId, role: "USER", content: message } });
+              await prisma.chatMessage.create({ data: { sessionId, role: "ASSISTANT", content: reply } });
+            }
+          }
+        } catch { /* non-critical */ }
+      }
       return NextResponse.json({ reply });
     } catch (err: unknown) {
       lastErrorStatus = (err as { status?: number })?.status;

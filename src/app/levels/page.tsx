@@ -87,12 +87,18 @@ export default async function LevelsPage() {
           ))}
         </div>
 
-        <div className="mt-8 text-center">
+        <div className="mt-8 flex justify-center gap-6">
           <Link
             href="/"
             className="text-terminal-dim text-xs hover:text-foreground transition-colors"
           >
             &lt; VỀ TRANG CHỦ
+          </Link>
+          <Link
+            href="/leaderboard"
+            className="text-terminal-amber text-xs hover:text-foreground transition-colors"
+          >
+            BẢNG XẾP HẠNG &gt;
           </Link>
         </div>
       </div>

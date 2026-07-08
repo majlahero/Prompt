@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { checkAnswer } from "@/lib/matching";
 import { calculateScore } from "@/lib/scoring";
 
@@ -37,6 +38,13 @@ export async function POST(request: NextRequest) {
   const correct = checkAnswer(answer, systemPromptRecord.secretAnswer);
 
   if (!correct) {
+    const session = await auth();
+    if (session?.user?.id) {
+      await prisma.gameSession.updateMany({
+        where: { userId: session.user.id, levelId, cleared: false },
+        data: { tries },
+      });
+    }
     return NextResponse.json({ correct: false });
   }
 
@@ -47,6 +55,59 @@ export async function POST(request: NextRequest) {
     hintsUsed,
     level.hints.length
   );
+
+  const session = await auth();
+  if (session?.user?.id) {
+    const userId = session.user.id;
+
+    const existingScore = await prisma.score.findFirst({
+      where: { userId, levelId },
+      orderBy: { totalPoints: "desc" },
+    });
+
+    if (!existingScore || points.totalPoints > existingScore.totalPoints) {
+      if (existingScore) {
+        await prisma.score.delete({ where: { id: existingScore.id } });
+      }
+      await prisma.score.create({
+        data: {
+          userId,
+          levelId,
+          totalPoints: points.totalPoints,
+          basePoints: level.basePoints,
+          timeBonus: points.timeBonus,
+          triesBonus: points.triesBonus,
+          cleanSolveBonus: points.cleanSolveBonus,
+          hintPenalty: points.hintPenalty,
+          timeTaken,
+        },
+      });
+    }
+
+    await prisma.gameSession.updateMany({
+      where: { userId, levelId, cleared: false },
+      data: { cleared: true, completedAt: new Date(), tries, hintsUsed },
+    });
+
+    const allScores = await prisma.score.findMany({
+      where: { userId },
+      orderBy: { totalPoints: "desc" },
+    });
+    const bestPerLevel = new Map<string, number>();
+    for (const s of allScores) {
+      const current = bestPerLevel.get(s.levelId);
+      if (current === undefined || s.totalPoints > current) {
+        bestPerLevel.set(s.levelId, s.totalPoints);
+      }
+    }
+    const totalPoints = Array.from(bestPerLevel.values()).reduce((a, b) => a + b, 0);
+    const daysCleared = bestPerLevel.size;
+
+    await prisma.user.update({
+      where: { id: userId },
+      data: { totalPoints, daysCleared },
+    });
+  }
 
   return NextResponse.json({ correct: true, points });
 }

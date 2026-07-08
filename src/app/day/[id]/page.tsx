@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -37,6 +38,7 @@ interface ScoreBreakdown {
 export default function DayPage() {
   const params = useParams();
   const dayNumber = params.id as string;
+  const { data: authSession, status: authStatus } = useSession();
 
   const [level, setLevel] = useState<Level | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -46,11 +48,13 @@ export default function DayPage() {
   const [tries, setTries] = useState(0);
   const [hints, setHints] = useState<HintData[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [elapsed, setElapsed] = useState(0);
   const [solved, setSolved] = useState(false);
   const [score, setScore] = useState<ScoreBreakdown | null>(null);
   const [error, setError] = useState("");
+  const [gameSessionId, setGameSessionId] = useState<string | null>(null);
+  const [sessionLoaded, setSessionLoaded] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -63,12 +67,44 @@ export default function DayPage() {
   }, [dayNumber]);
 
   useEffect(() => {
-    if (solved) return;
+    if (!level || authStatus === "loading") return;
+
+    if (authStatus !== "authenticated" || !authSession?.user?.id) {
+      setSessionLoaded(true);
+      return;
+    }
+
+    fetch(`/api/game-session?levelId=${level.id}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.id) {
+          setGameSessionId(data.id);
+          if (data.messages?.length > 0) {
+            setMessages(data.messages);
+          }
+          setTries(data.tries || 0);
+          setHintsUsed(data.hintsUsed || 0);
+          setStartTime(new Date(data.startedAt).getTime());
+          if (data.hints?.length > 0) {
+            setHints(data.hints);
+          }
+          if (data.cleared && data.score) {
+            setSolved(true);
+            setScore(data.score);
+          }
+        }
+        setSessionLoaded(true);
+      })
+      .catch(() => setSessionLoaded(true));
+  }, [level, authStatus, authSession?.user?.id]);
+
+  useEffect(() => {
+    if (solved || !sessionLoaded) return;
     const interval = setInterval(() => {
       setElapsed(Math.floor((Date.now() - startTime) / 1000));
     }, 1000);
     return () => clearInterval(interval);
-  }, [startTime, solved]);
+  }, [startTime, solved, sessionLoaded]);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -96,6 +132,7 @@ export default function DayPage() {
           levelId: level.id,
           message: userMsg.content,
           history: messages,
+          sessionId: gameSessionId,
         }),
       });
       const data = await res.json();
@@ -149,7 +186,11 @@ export default function DayPage() {
       const res = await fetch("/api/hint", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ levelId: level.id, hintIndex: nextIndex }),
+        body: JSON.stringify({
+          levelId: level.id,
+          hintIndex: nextIndex,
+          sessionId: gameSessionId,
+        }),
       });
       const data = await res.json();
       if (data.error) {

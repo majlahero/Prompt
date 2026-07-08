@@ -39,6 +39,12 @@ export default function Home() {
         >
           CÁCH CHƠI
         </Link>
+        <Link
+          href="/leaderboard"
+          className="border border-terminal-amber px-8 py-3 text-sm uppercase tracking-widest text-terminal-amber transition-colors hover:bg-terminal-amber hover:text-background"
+        >
+          BẢNG XẾP HẠNG
+        </Link>
       </div>
 
       <p className="mt-16 text-terminal-dim text-xs">
