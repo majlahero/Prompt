@@ -49,8 +49,11 @@ export default async function LevelsPage() {
 
   // Tìm level đầu tiên chưa cleared — đó là level tiếp theo được mở
   // Ngày 1 luôn mở. Ngày N chỉ mở khi ngày N-1 đã cleared.
+  // Guest (chưa đăng nhập) → mở hết, không lock.
+  const session = await auth();
+  const isGuest = !session?.user?.id;
   const firstUncleared = levels.find((l) => !l.cleared);
-  const maxUnlockedDay = firstUncleared ? firstUncleared.dayNumber : Infinity;
+  const maxUnlockedDay = isGuest ? Infinity : (firstUncleared ? firstUncleared.dayNumber : Infinity);
 
   return (
     <div className="min-h-screen px-4 py-8">

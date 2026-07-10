@@ -67,10 +67,10 @@ export default function DayPage() {
         const found = levels.find((l) => l.dayNumber === day);
         if (found) setLevel(found);
 
-        // Check unlock: ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
+        // Check unlock: guest không lock, ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
         if (day > 1) {
           const prevLevel = levels.find((l) => l.dayNumber === day - 1);
-          if (prevLevel && !prevLevel.cleared) {
+          if (prevLevel && prevLevel.cleared === false) {
             setLocked(true);
           }
         }
