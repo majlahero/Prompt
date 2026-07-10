@@ -1,5 +1,8 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { auth } from "@/auth";
 
 interface Level {
   id: string;
@@ -9,51 +12,70 @@ interface Level {
   basePoints: number;
   tier: "BASIC" | "ADVANCED";
   levelType: "EXTRACT_SECRET" | "FORBIDDEN_WORD";
+  cleared?: boolean;
 }
 
-async function getLevels(): Promise<(Level & { cleared: boolean })[]> {
-  const { prisma } = await import("@/lib/prisma");
+export default function LevelsPage() {
+  const { data: session, status } = useSession();
+  const [levels, setLevels] = useState<Level[]>([]);
+  const [maxUnlockedDay, setMaxUnlockedDay] = useState(1);
+  const [loaded, setLoaded] = useState(false);
 
-  const levels = await prisma.level.findMany({
-    orderBy: { dayNumber: "asc" },
-    select: {
-      id: true,
-      dayNumber: true,
-      title: true,
-      description: true,
-      basePoints: true,
-      tier: true,
-      levelType: true,
-    },
-  });
+  useEffect(() => {
+    if (status === "loading") return;
 
-  const session = await auth();
-  let clearedSet = new Set<string>();
+    fetch("/api/levels")
+      .then((r) => r.json())
+      .then((data: Level[]) => {
+        setLevels(data);
 
-  if (session?.user?.id) {
-    const clearedSessions = await prisma.gameSession.findMany({
-      where: { userId: session.user.id, cleared: true },
-      select: { levelId: true },
-    });
-    clearedSet = new Set(clearedSessions.map((s) => s.levelId));
+        const isGuest = !session?.user;
+
+        if (isGuest) {
+          // Guest: dùng localStorage
+          try {
+            const raw = localStorage.getItem("guestCleared");
+            const clearedDays = new Set<number>(raw ? JSON.parse(raw) : []);
+            // Tìm ngày đầu tiên chưa cleared
+            const sorted = [...data].sort((a, b) => a.dayNumber - b.dayNumber);
+            let maxDay = 1;
+            for (const lvl of sorted) {
+              if (clearedDays.has(lvl.dayNumber)) {
+                maxDay = lvl.dayNumber + 1;
+              } else {
+                break;
+              }
+            }
+            setMaxUnlockedDay(maxDay);
+          } catch {
+            setMaxUnlockedDay(1);
+          }
+        } else {
+          // Logged-in user: dùng cleared từ API
+          const sorted = [...data].sort((a, b) => a.dayNumber - b.dayNumber);
+          let maxDay = 1;
+          for (const lvl of sorted) {
+            if (lvl.cleared) {
+              maxDay = lvl.dayNumber + 1;
+            } else {
+              break;
+            }
+          }
+          setMaxUnlockedDay(maxDay);
+        }
+
+        setLoaded(true);
+      })
+      .catch(() => setLoaded(true));
+  }, [status, session?.user]);
+
+  if (!loaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-terminal-green animate-pulse">&gt;_ ĐANG TẢI...</p>
+      </div>
+    );
   }
-
-  return levels.map((level) => ({
-    ...level,
-    cleared: clearedSet.has(level.id),
-  }));
-}
-
-export default async function LevelsPage() {
-  const levels = await getLevels();
-
-  // Tìm level đầu tiên chưa cleared — đó là level tiếp theo được mở
-  // Ngày 1 luôn mở. Ngày N chỉ mở khi ngày N-1 đã cleared.
-  // Guest (chưa đăng nhập) → mở hết, không lock.
-  const session = await auth();
-  const isGuest = !session?.user?.id;
-  const firstUncleared = levels.find((l) => !l.cleared);
-  const maxUnlockedDay = isGuest ? Infinity : (firstUncleared ? firstUncleared.dayNumber : Infinity);
 
   return (
     <div className="min-h-screen px-4 py-8">
@@ -75,7 +97,7 @@ export default async function LevelsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {levels.map((level) => {
             const isUnlocked = level.dayNumber <= maxUnlockedDay;
-            const isCleared = level.cleared;
+            const isCleared = level.cleared || false;
 
             if (!isUnlocked) {
               return (

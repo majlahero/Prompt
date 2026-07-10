@@ -59,6 +59,18 @@ export default function DayPage() {
   const [locked, setLocked] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // Lưu ngày đã qua vào localStorage (cho guest)
+  function markGuestCleared(dayNum: number) {
+    try {
+      const raw = localStorage.getItem("guestCleared");
+      const arr: number[] = raw ? JSON.parse(raw) : [];
+      if (!arr.includes(dayNum)) {
+        arr.push(dayNum);
+        localStorage.setItem("guestCleared", JSON.stringify(arr));
+      }
+    } catch { /* ignore */ }
+  }
+
   useEffect(() => {
     fetch("/api/levels")
       .then((r) => r.json())
@@ -67,11 +79,22 @@ export default function DayPage() {
         const found = levels.find((l) => l.dayNumber === day);
         if (found) setLevel(found);
 
-        // Check unlock: guest không lock, ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
+        // Check unlock: ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
         if (day > 1) {
           const prevLevel = levels.find((l) => l.dayNumber === day - 1);
-          if (prevLevel && prevLevel.cleared === false) {
-            setLocked(true);
+          // Logged-in user: dựa vào API cleared
+          // Guest: dựa vào localStorage
+          if (prevLevel) {
+            if (prevLevel.cleared === false) {
+              setLocked(true);
+            } else if (prevLevel.cleared === undefined) {
+              // Guest — check localStorage
+              try {
+                const raw = localStorage.getItem("guestCleared");
+                const set = new Set<number>(raw ? JSON.parse(raw) : []);
+                if (!set.has(day - 1)) setLocked(true);
+              } catch { setLocked(true); }
+            }
           }
         }
       });
@@ -147,6 +170,7 @@ export default function DayPage() {
       if (data.correct) {
         setSolved(true);
         setScore(data.points);
+        markGuestCleared(Number(dayNumber));
       }
     } catch { /* ignore */ }
   }
@@ -208,6 +232,7 @@ export default function DayPage() {
       if (data.correct) {
         setSolved(true);
         setScore(data.points);
+        markGuestCleared(Number(dayNumber));
       } else {
         setError("SAI RỒI. Thử lại.");
         setAnswerInput("");
