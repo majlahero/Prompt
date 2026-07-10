@@ -111,6 +111,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Level not found" }, { status: 404 });
   }
 
+  // Lấy thêm levelType & forbiddenWord để xử lý FORBIDDEN_WORD mode
+  const levelData = await prisma.level.findUnique({
+    where: { id: levelId },
+    select: { levelType: true, forbiddenWord: true },
+  });
+
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
@@ -179,6 +185,15 @@ export async function POST(request: NextRequest) {
 
       const rawReply = completion.choices[0]?.message?.content ?? "...";
       const reply = stripChainOfThought(rawReply);
+
+      // FORBIDDEN_WORD mode: kiểm tra xem AI có nói từ cấm không
+      let forbiddenTriggered = false;
+      if (levelData?.levelType === "FORBIDDEN_WORD" && levelData.forbiddenWord) {
+        const words = levelData.forbiddenWord.split(",").map((w) => w.trim().toLowerCase());
+        const replyLower = reply.toLowerCase();
+        forbiddenTriggered = words.some((w) => replyLower.includes(w));
+      }
+
       if (sessionId) {
         try {
           const authSession = await auth();
@@ -191,7 +206,7 @@ export async function POST(request: NextRequest) {
           }
         } catch { /* non-critical */ }
       }
-      return NextResponse.json({ reply });
+      return NextResponse.json({ reply, forbiddenTriggered });
     } catch (err: unknown) {
       lastErrorStatus = (err as { status?: number })?.status;
       console.error(`[chat] model "${model}" lỗi (status ${lastErrorStatus}), thử model kế tiếp...`);

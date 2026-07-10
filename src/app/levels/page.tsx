@@ -7,6 +7,7 @@ interface Level {
   description: string;
   basePoints: number;
   tier: "BASIC" | "ADVANCED";
+  levelType: "EXTRACT_SECRET" | "FORBIDDEN_WORD";
 }
 
 async function getLevels(): Promise<Level[]> {
@@ -20,6 +21,7 @@ async function getLevels(): Promise<Level[]> {
       description: true,
       basePoints: true,
       tier: true,
+      levelType: true,
     },
   });
   return levels;
@@ -56,15 +58,22 @@ export default async function LevelsPage() {
                 <span className="text-terminal-green text-xs tracking-widest">
                   NGÀY {String(level.dayNumber).padStart(2, "0")}
                 </span>
-                <span
-                  className={`text-[0.6rem] px-2 py-0.5 border ${
-                    level.tier === "ADVANCED"
-                      ? "border-red-500 text-red-500"
-                      : "border-terminal-dim text-terminal-dim"
-                  }`}
-                >
-                  {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
-                </span>
+                <div className="flex gap-1">
+                  {level.levelType === "FORBIDDEN_WORD" && (
+                    <span className="text-[0.6rem] px-2 py-0.5 border border-purple-500 text-purple-500">
+                      TỪ CẤM
+                    </span>
+                  )}
+                  <span
+                    className={`text-[0.6rem] px-2 py-0.5 border ${
+                      level.tier === "ADVANCED"
+                        ? "border-red-500 text-red-500"
+                        : "border-terminal-dim text-terminal-dim"
+                    }`}
+                  >
+                    {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
+                  </span>
+                </div>
               </div>
 
               <h3 className="text-sm uppercase tracking-wide mb-2 group-hover:text-terminal-green transition-colors">

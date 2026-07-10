@@ -13,6 +13,7 @@ export async function GET() {
       answerPlaceholder: true,
       basePoints: true,
       tier: true,
+      levelType: true,
     },
   });
 

@@ -10,6 +10,7 @@ async function getLeaderboard() {
     select: {
       id: true,
       name: true,
+      displayName: true,
       image: true,
       totalPoints: true,
       daysCleared: true,
@@ -44,6 +45,7 @@ export default async function LeaderboardPage() {
       select: {
         id: true,
         name: true,
+        displayName: true,
         image: true,
         totalPoints: true,
         daysCleared: true,
@@ -112,7 +114,7 @@ export default async function LeaderboardPage() {
                     />
                   )}
                   <span className={isCurrentUser ? "text-terminal-green" : ""}>
-                    {player.name ?? "UNKNOWN"}
+                    {player.displayName ?? player.name ?? "UNKNOWN"}
                   </span>
                   {isCurrentUser && (
                     <span className="text-terminal-green text-[0.6rem]">[BẠN]</span>
@@ -148,7 +150,7 @@ export default async function LeaderboardPage() {
                     />
                   )}
                   <span className="text-terminal-green">
-                    {currentUserData.name ?? "UNKNOWN"}
+                    {currentUserData.displayName ?? currentUserData.name ?? "UNKNOWN"}
                   </span>
                   <span className="text-terminal-green text-[0.6rem]">[BẠN]</span>
                 </span>

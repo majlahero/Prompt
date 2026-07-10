@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
   const level = await prisma.level.findUnique({
     where: { id: levelId },
     include: { hints: true },
+    // Note: levelType is included by default (not in select)
   });
 
   if (!level) {
@@ -37,7 +38,10 @@ export async function POST(request: NextRequest) {
 
   const correct = checkAnswer(answer, systemPromptRecord.secretAnswer);
 
-  if (!correct) {
+  // FORBIDDEN_WORD levels: server-side xác nhận qua chat route, client gửi token đặc biệt
+  const isForbiddenWin = answer === "__FORBIDDEN_TRIGGERED__" && level.levelType === "FORBIDDEN_WORD";
+
+  if (!correct && !isForbiddenWin) {
     const session = await auth();
     if (session?.user?.id) {
       await prisma.gameSession.updateMany({

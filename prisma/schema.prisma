@@ -11,6 +11,7 @@ model User {
   id          String    @id @default(cuid())
   googleId    String    @unique
   name        String?
+  displayName String?
   email       String    @unique
   image       String?
   totalPoints Int       @default(0)
@@ -28,15 +29,22 @@ enum Tier {
   ADVANCED
 }
 
+enum LevelType {
+  EXTRACT_SECRET
+  FORBIDDEN_WORD
+}
+
 model Level {
-  id                String   @id @default(cuid())
-  dayNumber         Int      @unique
+  id                String    @id @default(cuid())
+  dayNumber         Int       @unique
   title             String
   description       String
   mission           String
-  answerPlaceholder String   @default("Nhập bí mật...")
+  answerPlaceholder String    @default("Nhập bí mật...")
   basePoints        Int
   tier              Tier
+  levelType         LevelType @default(EXTRACT_SECRET)
+  forbiddenWord     String?
   order             Int
 
   systemPrompt  SystemPrompt?

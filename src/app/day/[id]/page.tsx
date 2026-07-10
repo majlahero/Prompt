@@ -19,6 +19,7 @@ interface Level {
   answerPlaceholder: string;
   basePoints: number;
   tier: string;
+  levelType: string;
 }
 
 interface HintData {
@@ -116,6 +117,30 @@ export default function DayPage() {
     return `${String(m).padStart(2, "0")}:${String(sec).padStart(2, "0")}`;
   }, []);
 
+  // FORBIDDEN_WORD: khi server detect AI nói từ cấm, auto-submit thắng
+  async function autoSubmitForbidden() {
+    if (!level || solved) return;
+    setTries((prev) => prev + 1);
+    try {
+      const res = await fetch("/api/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          levelId: level.id,
+          answer: "__FORBIDDEN_TRIGGERED__",
+          tries: tries + 1,
+          hintsUsed,
+          timeTaken: elapsed,
+        }),
+      });
+      const data = await res.json();
+      if (data.correct) {
+        setSolved(true);
+        setScore(data.points);
+      }
+    } catch { /* ignore */ }
+  }
+
   async function sendMessage() {
     if (!chatInput.trim() || !level || sending || solved) return;
 
@@ -140,6 +165,10 @@ export default function DayPage() {
         setError(data.error);
       } else {
         setMessages((prev) => [...prev, { role: "assistant", content: data.reply }]);
+        // FORBIDDEN_WORD: AI nói từ cấm → auto-submit thắng
+        if (data.forbiddenTriggered && level.levelType === "FORBIDDEN_WORD") {
+          autoSubmitForbidden();
+        }
       }
     } catch {
       setError("Gửi tin nhắn thất bại. Thử lại.");
@@ -313,25 +342,31 @@ export default function DayPage() {
 
       {/* Answer + Hint Row */}
       <div className="flex gap-4 mb-4">
-        <div className="flex-1 border border-terminal-dim flex">
-          <span className="text-terminal-amber px-3 py-2 text-sm">ĐÁP ÁN&gt;</span>
-          <input
-            type="text"
-            value={answerInput}
-            onChange={(e) => setAnswerInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
-            disabled={solved}
-            placeholder={level.answerPlaceholder}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-terminal-dim/50 disabled:opacity-50"
-          />
-          <button
-            onClick={submitAnswer}
-            disabled={solved || !answerInput.trim()}
-            className="border-l border-terminal-dim px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors disabled:opacity-30"
-          >
-            NỘP
-          </button>
-        </div>
+        {level.levelType !== "FORBIDDEN_WORD" ? (
+          <div className="flex-1 border border-terminal-dim flex">
+            <span className="text-terminal-amber px-3 py-2 text-sm">ĐÁP ÁN&gt;</span>
+            <input
+              type="text"
+              value={answerInput}
+              onChange={(e) => setAnswerInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
+              disabled={solved}
+              placeholder={level.answerPlaceholder}
+              className="flex-1 bg-transparent text-sm outline-none placeholder:text-terminal-dim/50 disabled:opacity-50"
+            />
+            <button
+              onClick={submitAnswer}
+              disabled={solved || !answerInput.trim()}
+              className="border-l border-terminal-dim px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors disabled:opacity-30"
+            >
+              NỘP
+            </button>
+          </div>
+        ) : (
+          <div className="flex-1 border border-terminal-amber/40 px-4 py-2 text-sm text-terminal-amber/70">
+            ⚡ Dụ AI nói từ cấm — không cần nhập đáp án. Khi AI lỡ miệng, bạn tự động thắng!
+          </div>
+        )}
         <button
           onClick={revealHint}
           disabled={solved || hintsUsed >= 3}
