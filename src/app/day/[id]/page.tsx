@@ -56,14 +56,24 @@ export default function DayPage() {
   const [error, setError] = useState("");
   const [gameSessionId, setGameSessionId] = useState<string | null>(null);
   const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [locked, setLocked] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch("/api/levels")
       .then((r) => r.json())
-      .then((levels: Level[]) => {
-        const found = levels.find((l) => l.dayNumber === Number(dayNumber));
+      .then((levels: (Level & { cleared?: boolean })[]) => {
+        const day = Number(dayNumber);
+        const found = levels.find((l) => l.dayNumber === day);
         if (found) setLevel(found);
+
+        // Check unlock: ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
+        if (day > 1) {
+          const prevLevel = levels.find((l) => l.dayNumber === day - 1);
+          if (prevLevel && !prevLevel.cleared) {
+            setLocked(true);
+          }
+        }
       });
   }, [dayNumber]);
 
@@ -237,6 +247,26 @@ export default function DayPage() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-terminal-green animate-pulse">&gt;_ ĐANG TẢI DỮ LIỆU NHIỆM VỤ...</p>
+      </div>
+    );
+  }
+
+  if (locked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="border border-terminal-dim p-8 max-w-md text-center">
+          <p className="text-4xl mb-4">🔒</p>
+          <p className="text-terminal-green text-sm mb-2">NGÀY {String(level.dayNumber).padStart(2, "0")} — BỊ KHÓA</p>
+          <p className="text-terminal-dim text-sm mb-6">
+            Hoàn thành ngày {level.dayNumber - 1} trước để mở khóa nhiệm vụ này.
+          </p>
+          <Link
+            href="/levels"
+            className="border border-terminal-green px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors"
+          >
+            &lt; QUAY LẠI
+          </Link>
+        </div>
       </div>
     );
   }
