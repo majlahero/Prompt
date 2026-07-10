@@ -16,10 +16,15 @@ services:
       # NextAuth (nếu bật auth sau này)
       - AUTH_SECRET=${AUTH_SECRET:-}
       - AUTH_URL=${AUTH_URL:-https://trochoi.id.vn}
+      - AUTH_GOOGLE_ID=${AUTH_GOOGLE_ID:-}
+      - AUTH_GOOGLE_SECRET=${AUTH_GOOGLE_SECRET:-}
     volumes:
       - db-data:/data
     expose:
       - "3000"
+    # Cho phép container gọi tới dịch vụ chạy trên host (vd: 9router ở localhost:20128).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - web
 
