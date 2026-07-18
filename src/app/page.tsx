@@ -1,6 +1,11 @@
 import Link from "next/link";
 import TerminalDemo from "@/components/TerminalDemo";
 
+// Trang chủ hiển thị bảng xếp hạng + màn nổi bật lấy từ DB.
+// Nếu để tĩnh (mặc định), dữ liệu bị đóng băng tại thời điểm build → luôn rỗng.
+// force-dynamic để mỗi request đều query DB mới nhất (giống trang /leaderboard).
+export const dynamic = "force-dynamic";
+
 async function getTopPlayers() {
   const { prisma } = await import("@/lib/prisma");
   return prisma.user.findMany({
