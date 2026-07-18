@@ -49,15 +49,21 @@ export default function DayPage() {
   const [tries, setTries] = useState(0);
   const [hints, setHints] = useState<HintData[]>([]);
   const [hintsUsed, setHintsUsed] = useState(0);
-  const [startTime, setStartTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(0);
   const [elapsed, setElapsed] = useState(0);
   const [solved, setSolved] = useState(false);
   const [score, setScore] = useState<ScoreBreakdown | null>(null);
   const [error, setError] = useState("");
   const [gameSessionId, setGameSessionId] = useState<string | null>(null);
-  const [sessionLoaded, setSessionLoaded] = useState(false);
+  const [sessionFetched, setSessionFetched] = useState(false);
   const [locked, setLocked] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // Derived: đã xong bước load session cũ chưa (guest xong ngay, user xong sau khi fetch)
+  const sessionLoaded =
+    !!level &&
+    authStatus !== "loading" &&
+    (authStatus !== "authenticated" || !authSession?.user?.id || sessionFetched);
 
   // Lưu ngày đã qua vào localStorage (cho guest)
   function markGuestCleared(dayNum: number) {
@@ -105,10 +111,8 @@ export default function DayPage() {
   useEffect(() => {
     if (!level || authStatus === "loading") return;
 
-    if (authStatus !== "authenticated" || !authSession?.user?.id) {
-      setSessionLoaded(true);
-      return;
-    }
+    // Guest: không có session server để load → sessionLoaded được suy ra từ state
+    if (authStatus !== "authenticated" || !authSession?.user?.id) return;
 
     fetch(`/api/game-session?levelId=${level.id}`)
       .then((r) => r.json())
@@ -129,15 +133,17 @@ export default function DayPage() {
             setScore(data.score);
           }
         }
-        setSessionLoaded(true);
+        setSessionFetched(true);
       })
-      .catch(() => setSessionLoaded(true));
+      .catch(() => setSessionFetched(true));
   }, [level, authStatus, authSession?.user?.id]);
 
   useEffect(() => {
     if (solved || !sessionLoaded) return;
+    // Guest chưa có startTime từ server → lấy mốc lúc timer bắt đầu chạy
+    const base = startTime || Date.now();
     const interval = setInterval(() => {
-      setElapsed(Math.floor((Date.now() - startTime) / 1000));
+      setElapsed(Math.floor((Date.now() - base) / 1000));
     }, 1000);
     return () => clearInterval(interval);
   }, [startTime, solved, sessionLoaded]);

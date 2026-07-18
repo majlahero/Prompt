@@ -56,3 +56,11 @@ prisma/dev.db
 deploy/webhook.env
 deploy/deploy.log
 deploy/.deploy.lock
+
+# claude task scratch files
+.claude-task-*.md
+
+# local test scripts & results
+test_*.py
+test_results*.json
+export_levels.py

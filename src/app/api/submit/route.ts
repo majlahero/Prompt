@@ -56,8 +56,7 @@ export async function POST(request: NextRequest) {
     level.basePoints,
     timeTaken,
     tries,
-    hintsUsed,
-    level.hints.length
+    hintsUsed
   );
 
   const session = await auth();

@@ -10,8 +10,7 @@ export function calculateScore(
   basePoints: number,
   timeTaken: number,
   tries: number,
-  hintsUsed: number,
-  _totalHints: number
+  hintsUsed: number
 ): ScoreBreakdown {
   const timeBonus = timeTaken < 60 ? 50 : timeTaken < 120 ? 30 : timeTaken < 300 ? 10 : 0;
   const triesBonus = tries <= 3 ? 40 : tries <= 5 ? 20 : tries <= 10 ? 10 : 0;
