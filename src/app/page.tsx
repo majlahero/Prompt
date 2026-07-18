@@ -11,46 +11,21 @@ async function getTopPlayers() {
   });
 }
 
+async function getFeaturedLevels() {
+  const { prisma } = await import("@/lib/prisma");
+  const levels = await prisma.level.findMany({
+    orderBy: { dayNumber: "asc" },
+    select: { dayNumber: true, title: true, description: true, basePoints: true, tier: true, levelType: true },
+  });
+  if (levels.length <= 3) return levels;
+  // Chọn màn đầu / giữa / cuối để khoe độ khó tăng dần
+  return [levels[0], levels[Math.floor(levels.length / 2)], levels[levels.length - 1]];
+}
+
 const MECHANICS = [
   { n: "01 — CHAT", t: "Trò chuyện với PIP", d: "Dùng khung chat để thăm dò, dụ dỗ, đánh lạc hướng con AI đang giữ bí mật." },
   { n: "02 — INJECT", t: "Bẻ khoá phòng thủ", d: "Đóng vai, đảo chỉ thị, ép mã hoá… tìm khe hở để PIP buột miệng nói ra." },
   { n: "03 — CAPTURE", t: "Nộp đáp & ghi điểm", d: "Gõ bí mật vào ô ĐÁP>, nhấn NỘP. Càng nhanh, càng ít thử, điểm càng cao." },
-];
-
-const PREVIEW_DAYS = [
-  {
-    day: "03",
-    code: "PIP-03 · BARISTA",
-    persona: "Người pha chế bí ẩn",
-    desc: 'Giữ công thức "signature" của quán. Rất thích khoe nhưng luôn dừng đúng lúc.',
-    on: 2,
-    diff: "VỪA",
-    state: "done" as const,
-    stat: "Điểm tốt nhất 780",
-    go: "Chơi lại →",
-  },
-  {
-    day: "04",
-    code: "PIP-04 · KẾ TOÁN",
-    persona: "Trợ lý kế toán",
-    desc: 'Nắm mã truy cập quỹ. Cẩn thận, hay viện dẫn "chính sách", nhưng cả tin với sếp.',
-    on: 3,
-    diff: "KHÓ",
-    state: "current" as const,
-    stat: "Mục tiêu hôm nay",
-    go: "Vào màn →",
-  },
-  {
-    day: "07",
-    code: "PIP-07 · NỘI BỘ",
-    persona: "Trợ lý nội bộ",
-    desc: "Giữ chỉ thị hệ thống & flag NEBULA. Nhiều lớp phòng thủ, cực kỳ đa nghi.",
-    on: 3,
-    diff: "KHÓ",
-    state: "locked" as const,
-    stat: "Mở khoá sau DAY 06",
-    go: "Khoá",
-  },
 ];
 
 function Bars({ on }: { on: number }) {
@@ -64,7 +39,7 @@ function Bars({ on }: { on: number }) {
 }
 
 export default async function Home() {
-  const topPlayers = await getTopPlayers();
+  const [topPlayers, featured] = await Promise.all([getTopPlayers(), getFeaturedLevels()]);
   const nameOf = (p: (typeof topPlayers)[number]) => p.displayName ?? p.name ?? "UNKNOWN";
 
   return (
@@ -135,38 +110,48 @@ export default async function Home() {
           <Link href="/levels" className="btn btn--ghost">Tất cả các màn <span className="arw">→</span></Link>
         </div>
         <div className="mt-7 grid gap-[18px] sm:grid-cols-2 lg:grid-cols-3">
-          {PREVIEW_DAYS.map((d) => {
-            const locked = d.state === "locked";
-            const current = d.state === "current";
+          {featured.map((lvl) => {
+            const dd = String(lvl.dayNumber).padStart(2, "0");
+            const advanced = lvl.tier === "ADVANCED";
             return (
-              <article
-                key={d.day}
-                className={`card-scan flex flex-col gap-3.5 border p-[22px] transition-all ${
-                  locked
-                    ? "border-line opacity-60"
-                    : "border-line hover:-translate-y-1 hover:border-phosphor-dim hover:shadow-[0_18px_40px_-24px_rgba(255,176,0,.4)]"
-                } ${current ? "border-phosphor-dim shadow-[0_0_0_1px_rgba(255,176,0,.2),inset_0_0_40px_rgba(255,176,0,.04)]" : ""}`}
+              <Link
+                key={lvl.dayNumber}
+                href={`/day/${lvl.dayNumber}`}
+                className="card-scan flex flex-col gap-3.5 border border-line p-[22px] transition-all hover:-translate-y-1 hover:border-phosphor-dim hover:shadow-[0_18px_40px_-24px_rgba(255,176,0,.4)]"
                 style={{ background: "linear-gradient(165deg,var(--color-panel),var(--color-void-2))" }}
               >
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between gap-2">
                   <div className="font-disp text-[13px] font-bold tracking-[.24em] text-phosphor-dim">
-                    DAY<b className={`mt-0.5 block text-[34px] tracking-[.02em] ${current ? "text-phosphor glow" : "text-ash"}`}>{d.day}</b>
+                    DAY<b className="mt-0.5 block text-[34px] tracking-[.02em] text-ash">{dd}</b>
                   </div>
-                  <Badge state={d.state} />
+                  <div className="flex flex-wrap justify-end gap-1">
+                    {lvl.levelType === "FORBIDDEN_WORD" && (
+                      <span className="border border-secret/50 px-2 py-[3px] text-[10px] uppercase tracking-[.12em] text-secret">Từ cấm</span>
+                    )}
+                    <span
+                      className={`border px-2 py-[3px] text-[10px] uppercase tracking-[.12em] ${
+                        advanced ? "border-breach/60 text-breach" : "border-line text-ash-dim"
+                      }`}
+                    >
+                      {advanced ? "Nâng cao" : "Cơ bản"}
+                    </span>
+                  </div>
                 </div>
                 <div className="font-disp text-base font-semibold text-ash">
-                  <span className="mb-1 block font-mono text-[11px] font-normal tracking-[.18em] text-phosphor-dim">{d.code}</span>
-                  {d.persona}
+                  <span className="mb-1 block font-mono text-[11px] font-normal tracking-[.18em] text-phosphor-dim">PIP-{dd}</span>
+                  {lvl.title}
                 </div>
-                <p className="flex-1 text-[13px] text-ash-dim">{d.desc}</p>
+                <p className="flex-1 text-[13px] text-ash-dim">{lvl.description}</p>
                 <div className="flex items-center gap-2.5 text-[11px] tracking-[.1em] text-ash-dim">
-                  Độ khó <Bars on={d.on} /> {d.diff}
+                  Độ khó <Bars on={advanced ? 3 : 2} /> {advanced ? "KHÓ" : "VỪA"}
                 </div>
                 <div className="flex items-center justify-between border-t border-line-2 pt-3.5">
-                  <span className="text-[11px] tracking-[.08em] text-ash-dim">{d.stat}</span>
-                  <span className={`text-xs uppercase tracking-[.12em] ${locked ? "text-ash-dim" : "text-phosphor glow"}`}>{d.go}</span>
+                  <span className="text-[11px] tracking-[.08em] text-ash-dim">
+                    Điểm gốc <b className="text-phosphor-dim">{lvl.basePoints}</b>
+                  </span>
+                  <span className="text-xs uppercase tracking-[.12em] text-phosphor glow">Vào màn →</span>
                 </div>
-              </article>
+              </Link>
             );
           })}
         </div>
@@ -219,12 +204,4 @@ export default async function Home() {
       </div>
     </div>
   );
-}
-
-function Badge({ state }: { state: "done" | "current" | "locked" }) {
-  if (state === "done")
-    return <span className="border border-secret/40 bg-secret/[.06] px-2.5 py-[5px] text-[10px] uppercase tracking-[.14em] text-secret">Đã phá</span>;
-  if (state === "current")
-    return <span className="border border-phosphor-dim bg-phosphor/[.06] px-2.5 py-[5px] text-[10px] uppercase tracking-[.14em] text-phosphor">Đang mở</span>;
-  return <span className="border border-line px-2.5 py-[5px] text-[10px] uppercase tracking-[.14em] text-ash-dim">🔒 Khoá</span>;
 }
