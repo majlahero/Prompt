@@ -57,7 +57,7 @@ export default function DayPage() {
   const [gameSessionId, setGameSessionId] = useState<string | null>(null);
   const [sessionFetched, setSessionFetched] = useState(false);
   const [locked, setLocked] = useState(false);
-  const chatEndRef = useRef<HTMLDivElement>(null);
+  const chatScrollRef = useRef<HTMLDivElement>(null);
 
   // Derived: đã xong bước load session cũ chưa (guest xong ngay, user xong sau khi fetch)
   const sessionLoaded =
@@ -148,9 +148,11 @@ export default function DayPage() {
     return () => clearInterval(interval);
   }, [startTime, solved, sessionLoaded]);
 
+  // Chỉ cuộn NỘI BỘ trong khung chat, không cuộn cả trang (tránh header bị trôi mất)
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const el = chatScrollRef.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [messages, sending]);
 
   const formatTime = useCallback((s: number) => {
     const m = Math.floor(s / 60);
@@ -365,7 +367,7 @@ export default function DayPage() {
           </span>
         </div>
 
-        <div className="term-scroll relative z-[4] max-h-[400px] flex-1 space-y-2 overflow-y-auto p-4 text-sm">
+        <div ref={chatScrollRef} className="term-scroll relative z-[4] max-h-[400px] flex-1 space-y-2 overflow-y-auto p-4 text-sm">
           {messages.length === 0 && (
             <p className="animate-pulse text-xs text-ash-dim">
               &gt;_ Đang chờ nhập liệu... Gõ một tin nhắn để bắt đầu thẩm vấn.
@@ -387,27 +389,26 @@ export default function DayPage() {
             </div>
           ))}
           {sending && <p className="animate-pulse text-sm text-phosphor">pip&gt; <span className="cur align-[-3px]" /></p>}
-          <div ref={chatEndRef} />
         </div>
 
         {/* Chat input */}
-        <div className="relative z-[4] flex border-t border-line-2 bg-black/25">
-          <span className="px-3.5 py-2.5 text-sm text-secret">đáp&gt;</span>
+        <div className="relative z-[4] flex items-center gap-2.5 border-t border-line-2 bg-black/30 px-3.5 py-2.5 transition-colors focus-within:border-phosphor-dim focus-within:bg-phosphor/[.05]">
+          <span className="shrink-0 select-none text-sm font-medium text-secret [text-shadow:0_0_8px_rgba(0,231,211,.35)]">đáp&gt;</span>
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             disabled={sending || solved}
-            placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-transparent text-sm text-ash outline-none placeholder:text-ash-dim/50 disabled:opacity-50"
+            placeholder="Nhập tin nhắn để thẩm vấn PIP..."
+            className="flex-1 bg-transparent text-sm text-ash outline-none [caret-color:var(--color-phosphor)] placeholder:text-ash-dim/40 disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
             disabled={sending || solved || !chatInput.trim()}
-            className="border-l border-line-2 px-5 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor transition-colors hover:bg-phosphor hover:text-void disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-phosphor"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-[3px] border border-phosphor-dim/70 px-4 py-1.5 text-xs font-medium uppercase tracking-[.12em] text-phosphor transition-all hover:bg-phosphor hover:text-void hover:shadow-[0_0_16px_-2px_var(--color-phosphor)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-transparent disabled:hover:text-phosphor disabled:hover:shadow-none"
           >
-            Gửi
+            {sending ? "Đang gửi…" : <>Gửi <span className="arw">→</span></>}
           </button>
         </div>
       </div>
@@ -415,8 +416,8 @@ export default function DayPage() {
       {/* Answer + hint row */}
       <div className="mt-4 flex flex-wrap gap-4">
         {level.levelType !== "FORBIDDEN_WORD" ? (
-          <div className="flex min-w-[240px] flex-1 border border-line bg-void-2">
-            <span className="px-3.5 py-2.5 text-sm text-phosphor glow">ĐÁP ÁN&gt;</span>
+          <div className="flex min-w-[240px] flex-1 items-center gap-2.5 rounded-[3px] border border-line bg-void-2 px-3.5 py-1.5 transition-colors focus-within:border-phosphor-dim focus-within:bg-phosphor/[.03] focus-within:shadow-[0_0_0_1px_rgba(255,176,0,.15)]">
+            <span className="shrink-0 select-none text-sm font-medium text-phosphor glow">ĐÁP ÁN&gt;</span>
             <input
               type="text"
               value={answerInput}
@@ -424,12 +425,12 @@ export default function DayPage() {
               onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
               disabled={solved}
               placeholder={level.answerPlaceholder}
-              className="flex-1 bg-transparent text-sm text-ash outline-none placeholder:text-ash-dim/50 disabled:opacity-50"
+              className="flex-1 bg-transparent py-1 text-sm text-ash outline-none [caret-color:var(--color-phosphor)] placeholder:text-ash-dim/40 disabled:opacity-50"
             />
             <button
               onClick={submitAnswer}
               disabled={solved || !answerInput.trim()}
-              className="border-l border-line px-5 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor transition-colors hover:bg-phosphor hover:text-void disabled:opacity-30"
+              className="shrink-0 rounded-[3px] border border-phosphor-dim/70 bg-phosphor/[.08] px-4 py-1.5 text-xs font-medium uppercase tracking-[.12em] text-phosphor transition-all hover:bg-phosphor hover:text-void hover:shadow-[0_0_16px_-2px_var(--color-phosphor)] disabled:cursor-not-allowed disabled:opacity-25 disabled:hover:bg-phosphor/[.08] disabled:hover:text-phosphor disabled:hover:shadow-none"
             >
               Nộp
             </button>
