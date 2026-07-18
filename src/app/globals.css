@@ -79,7 +79,6 @@ body::before {
 /* ---------- keyframes ---------- */
 @keyframes blink { 50% { opacity: 0 } }
 @keyframes pulse { 50% { opacity: .4 } }
-@keyframes marquee { from { transform: translateX(0) } to { transform: translateX(-50%) } }
 @keyframes scanmove { from { transform: translateY(-100%) } to { transform: translateY(900%) } }
 @keyframes fadeup { from { opacity: 0; transform: translateY(6px) } to { opacity: 1; transform: none } }
 @keyframes gl1 { 0%, 92%, 100% { transform: none; opacity: 0 } 93% { transform: translate(-2px, 1px); opacity: .5 } 96% { transform: translate(2px, -1px); opacity: .4 } }
@@ -125,12 +124,6 @@ body::before {
 .stitle .tick { color: var(--color-phosphor); text-shadow: var(--glow); font-weight: 500; }
 .seyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .34em; text-transform: uppercase; color: var(--color-phosphor-dim); margin: 0 0 10px; }
 
-/* ---------- ticker ---------- */
-.ticker { position: relative; z-index: 2; border-bottom: 1px solid var(--color-line-2); background: rgba(0, 0, 0, .32); overflow: hidden; height: 30px; }
-.ticker__track { display: flex; gap: 44px; align-items: center; height: 30px; white-space: nowrap; width: max-content; animation: marquee 34s linear infinite; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--color-ash-dim); }
-.ticker__track b { color: var(--color-secret); font-weight: 600; }
-.ticker__track .a { color: var(--color-phosphor-dim); }
-.ticker:hover .ticker__track { animation-play-state: paused; }
 
 /* ---------- glitch title ---------- */
 .glitch { position: relative; }

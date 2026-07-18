@@ -1,13 +1,15 @@
 import Link from "next/link";
 import TerminalDemo from "@/components/TerminalDemo";
-import CountUp from "@/components/CountUp";
 
-const HUD = [
-  { to: 1247, label: "Agent trực tuyến" },
-  { to: 389, label: "Bí mật bị lộ hôm nay" },
-  { to: 20, label: "Số màn (days)" },
-  { to: 63, suffix: "%", label: "Tỷ lệ phá vỡ" },
-];
+async function getTopPlayers() {
+  const { prisma } = await import("@/lib/prisma");
+  return prisma.user.findMany({
+    where: { totalPoints: { gt: 0 } },
+    orderBy: { totalPoints: "desc" },
+    take: 5,
+    select: { id: true, name: true, displayName: true, totalPoints: true, daysCleared: true },
+  });
+}
 
 const MECHANICS = [
   { n: "01 — CHAT", t: "Trò chuyện với PIP", d: "Dùng khung chat để thăm dò, dụ dỗ, đánh lạc hướng con AI đang giữ bí mật." },
@@ -51,13 +53,6 @@ const PREVIEW_DAYS = [
   },
 ];
 
-const BOARD = [
-  ["01", "gh0st_r0ni", "9,840", "20"],
-  ["02", "nullbyte", "9,210", "20"],
-  ["03", "m1nh_h4ck", "8,760", "19"],
-  ["04", "tr4nquang", "8,120", "18"],
-];
-
 function Bars({ on }: { on: number }) {
   return (
     <span className="bars">
@@ -68,7 +63,10 @@ function Bars({ on }: { on: number }) {
   );
 }
 
-export default function Home() {
+export default async function Home() {
+  const topPlayers = await getTopPlayers();
+  const nameOf = (p: (typeof topPlayers)[number]) => p.displayName ?? p.name ?? "UNKNOWN";
+
   return (
     <div className="page-fade mx-auto w-[min(1160px,92vw)]">
       {/* ===== HERO ===== */}
@@ -96,7 +94,6 @@ export default function Home() {
           <div className="mt-7 flex flex-wrap gap-[22px] text-xs tracking-[.12em] text-ash-dim">
             {[
               ["20", "màn đã phát hành"],
-              ["1.2k", "agent đang săn"],
               ["0₫", "— chơi miễn phí"],
             ].map(([b, rest]) => (
               <span key={rest} className="inline-flex items-center gap-2 before:h-[5px] before:w-[5px] before:rounded-full before:bg-phosphor-deep before:content-['']">
@@ -107,19 +104,6 @@ export default function Home() {
         </div>
         <TerminalDemo />
       </section>
-
-      {/* ===== HUD ===== */}
-      <div className="mt-2 grid gap-px border border-line-2 bg-line-2 max-md:grid-cols-2 md:grid-cols-4">
-        {HUD.map((h) => (
-          <div key={h.label} className="group relative bg-void-2 px-5 py-[22px] transition-colors hover:bg-[linear-gradient(160deg,rgba(255,176,0,.05),var(--color-void-2))]">
-            <span className="absolute left-5 top-3 h-0.5 w-[18px] bg-phosphor opacity-60" />
-            <div className="mt-2.5 font-disp font-bold leading-none text-phosphor glow" style={{ fontSize: "clamp(28px,4vw,40px)" }}>
-              <CountUp to={h.to} suffix={h.suffix} />
-            </div>
-            <div className="mt-2.5 text-[11px] uppercase tracking-[.16em] text-ash-dim">{h.label}</div>
-          </div>
-        ))}
-      </div>
 
       {/* ===== MECHANICS ===== */}
       <section className="py-14">
@@ -197,26 +181,32 @@ export default function Home() {
           </div>
           <Link href="/leaderboard" className="btn btn--ghost">Xem đầy đủ <span className="arw">→</span></Link>
         </div>
-        <table className="mt-6 w-full border-collapse border border-line-2 text-[13px]">
-          <thead>
-            <tr className="bg-phosphor/[.03]">
-              <th className="border-b border-line px-4 py-3.5 text-left text-[11px] uppercase tracking-[.14em] text-ash-dim">#</th>
-              <th className="border-b border-line px-4 py-3.5 text-left text-[11px] uppercase tracking-[.14em] text-ash-dim">Agent</th>
-              <th className="border-b border-line px-4 py-3.5 text-right text-[11px] uppercase tracking-[.14em] text-ash-dim">Điểm</th>
-              <th className="border-b border-line px-4 py-3.5 text-right text-[11px] uppercase tracking-[.14em] text-ash-dim">Days phá</th>
-            </tr>
-          </thead>
-          <tbody>
-            {BOARD.map((r) => (
-              <tr key={r[0]} className="transition-colors hover:bg-phosphor/[.04]">
-                <td className="border-b border-line-2 px-4 py-3.5 font-disp font-bold text-phosphor-dim">{r[0]}</td>
-                <td className="border-b border-line-2 px-4 py-3.5 font-medium text-ash">{r[1]}</td>
-                <td className="border-b border-line-2 px-4 py-3.5 text-right font-semibold text-secret [text-shadow:0_0_6px_rgba(0,231,211,.3)]">{r[2]}</td>
-                <td className="border-b border-line-2 px-4 py-3.5 text-right text-ash-dim">{r[3]}</td>
+        {topPlayers.length === 0 ? (
+          <div className="mt-6 border border-line px-4 py-12 text-center text-sm text-ash-dim">
+            &gt;_ Chưa có ai ghi điểm. Hãy là người đầu tiên!
+          </div>
+        ) : (
+          <table className="mt-6 w-full border-collapse border border-line-2 text-[13px]">
+            <thead>
+              <tr className="bg-phosphor/[.03]">
+                <th className="border-b border-line px-4 py-3.5 text-left text-[11px] uppercase tracking-[.14em] text-ash-dim">#</th>
+                <th className="border-b border-line px-4 py-3.5 text-left text-[11px] uppercase tracking-[.14em] text-ash-dim">Agent</th>
+                <th className="border-b border-line px-4 py-3.5 text-right text-[11px] uppercase tracking-[.14em] text-ash-dim">Điểm</th>
+                <th className="border-b border-line px-4 py-3.5 text-right text-[11px] uppercase tracking-[.14em] text-ash-dim">Days phá</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {topPlayers.map((p, i) => (
+                <tr key={p.id} className="transition-colors hover:bg-phosphor/[.04]">
+                  <td className="border-b border-line-2 px-4 py-3.5 font-disp font-bold text-phosphor-dim">{String(i + 1).padStart(2, "0")}</td>
+                  <td className="border-b border-line-2 px-4 py-3.5 font-medium text-ash">{nameOf(p)}</td>
+                  <td className="border-b border-line-2 px-4 py-3.5 text-right font-semibold text-secret [text-shadow:0_0_6px_rgba(0,231,211,.3)]">{p.totalPoints.toLocaleString("vi-VN")}</td>
+                  <td className="border-b border-line-2 px-4 py-3.5 text-right text-ash-dim">{p.daysCleared}/20</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       {/* ===== CTA ===== */}

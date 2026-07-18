@@ -22,27 +22,6 @@ export const metadata: Metadata = {
   description: "BreakPrompt: trò chơi CTF tiêm nhiễm prompt. Đánh lừa AI, moi bí mật, ghi điểm.",
 };
 
-const TICKER = [
-  <>
-    <b>gh0st_r0ni</b> <span className="a">đã phá</span> DAY 20 · +940
-  </>,
-  <>
-    <b>nullbyte</b> <span className="a">rò rỉ flag</span> NEBULA-7F3A
-  </>,
-  <>
-    <span className="a">bí mật bị lộ hôm nay:</span> <b>389</b>
-  </>,
-  <>
-    <b>z3r0c00l</b> <span className="a">một phát ăn ngay</span> DAY 05
-  </>,
-  <>
-    <b>m1nh_h4ck</b> <span className="a">bẻ khoá</span> PIP-06 · Y TÁ
-  </>,
-  <>
-    <span className="a">agent trực tuyến:</span> <b>1,247</b>
-  </>,
-];
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -52,15 +31,6 @@ export default function RootLayout({
     <html lang="vi" className={`${chakra.variable} ${plexMono.variable} h-full`}>
       <body className="min-h-screen font-mono antialiased">
         <div className="crt" aria-hidden="true" />
-
-        {/* live ticker */}
-        <div className="ticker" aria-hidden="true">
-          <div className="ticker__track">
-            {[...TICKER, ...TICKER].map((item, i) => (
-              <span key={i}>{item}</span>
-            ))}
-          </div>
-        </div>
 
         <Providers>
           {/* nav */}
