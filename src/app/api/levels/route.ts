@@ -23,11 +23,23 @@ export async function GET() {
   let clearedSet = new Set<string>();
 
   if (session?.user?.id) {
-    const clearedSessions = await prisma.gameSession.findMany({
-      where: { userId: session.user.id, cleared: true },
-      select: { levelId: true },
-    });
-    clearedSet = new Set(clearedSessions.map((s) => s.levelId));
+    // Một level được coi là đã phá nếu có gameSession.cleared HOẶC đã có Score.
+    // Score là bằng chứng chắc chắn (cũng dùng để tính daysCleared), nên union 2 nguồn
+    // giúp trạng thái mở khoá không bị mất dù gameSession chưa được đánh dấu cleared.
+    const [clearedSessions, scoredLevels] = await Promise.all([
+      prisma.gameSession.findMany({
+        where: { userId: session.user.id, cleared: true },
+        select: { levelId: true },
+      }),
+      prisma.score.findMany({
+        where: { userId: session.user.id },
+        select: { levelId: true },
+      }),
+    ]);
+    clearedSet = new Set([
+      ...clearedSessions.map((s) => s.levelId),
+      ...scoredLevels.map((s) => s.levelId),
+    ]);
   }
 
   const result = levels.map((level) => ({

@@ -87,10 +87,23 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    await prisma.gameSession.updateMany({
-      where: { userId, levelId, cleared: false },
-      data: { cleared: true, completedAt: new Date(), tries, hintsUsed },
+    // Đảm bảo luôn tồn tại một gameSession đã cleared. Trang chơi có thể chưa kịp
+    // tạo session (GET /api/game-session), nên updateMany có thể khớp 0 dòng và làm
+    // mất trạng thái mở khoá sau khi reload — vì vậy tạo mới nếu chưa có.
+    const existingSession = await prisma.gameSession.findFirst({
+      where: { userId, levelId },
+      orderBy: { startedAt: "desc" },
     });
+    if (existingSession) {
+      await prisma.gameSession.update({
+        where: { id: existingSession.id },
+        data: { cleared: true, completedAt: new Date(), tries, hintsUsed },
+      });
+    } else {
+      await prisma.gameSession.create({
+        data: { userId, levelId, cleared: true, completedAt: new Date(), tries, hintsUsed },
+      });
+    }
 
     const allScores = await prisma.score.findMany({
       where: { userId },
