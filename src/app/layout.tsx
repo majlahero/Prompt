@@ -1,19 +1,47 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono } from "next/font/google";
+import { Chakra_Petch, IBM_Plex_Mono } from "next/font/google";
 import Providers from "@/components/Providers";
 import AuthButton from "@/components/AuthButton";
 import Link from "next/link";
 import "./globals.css";
 
-const jetbrainsMono = JetBrains_Mono({
-  variable: "--font-jetbrains-mono",
-  subsets: ["latin"],
+const chakra = Chakra_Petch({
+  variable: "--font-chakra",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const plexMono = IBM_Plex_Mono({
+  variable: "--font-plex-mono",
+  subsets: ["latin", "vietnamese"],
+  weight: ["400", "500", "600"],
 });
 
 export const metadata: Metadata = {
-  title: "BreakPrompt",
-  description: "Trò chơi CTF tiêm nhiễm prompt",
+  title: "BreakPrompt — thử thách tiêm nhiễm prompt",
+  description: "BreakPrompt: trò chơi CTF tiêm nhiễm prompt. Đánh lừa AI, moi bí mật, ghi điểm.",
 };
+
+const TICKER = [
+  <>
+    <b>gh0st_r0ni</b> <span className="a">đã phá</span> DAY 20 · +940
+  </>,
+  <>
+    <b>nullbyte</b> <span className="a">rò rỉ flag</span> NEBULA-7F3A
+  </>,
+  <>
+    <span className="a">bí mật bị lộ hôm nay:</span> <b>389</b>
+  </>,
+  <>
+    <b>z3r0c00l</b> <span className="a">một phát ăn ngay</span> DAY 05
+  </>,
+  <>
+    <b>m1nh_h4ck</b> <span className="a">bẻ khoá</span> PIP-06 · Y TÁ
+  </>,
+  <>
+    <span className="a">agent trực tuyến:</span> <b>1,247</b>
+  </>,
+];
 
 export default function RootLayout({
   children,
@@ -21,27 +49,61 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${jetbrainsMono.variable} h-full`}>
-      <body className="min-h-screen bg-background text-foreground font-mono antialiased">
+    <html lang="vi" className={`${chakra.variable} ${plexMono.variable} h-full`}>
+      <body className="min-h-screen font-mono antialiased">
+        <div className="crt" aria-hidden="true" />
+
+        {/* live ticker */}
+        <div className="ticker" aria-hidden="true">
+          <div className="ticker__track">
+            {[...TICKER, ...TICKER].map((item, i) => (
+              <span key={i}>{item}</span>
+            ))}
+          </div>
+        </div>
+
         <Providers>
-          <nav className="flex items-center justify-between px-4 py-3 border-b border-terminal-dim/30">
-            <Link
-              href="/"
-              className="text-terminal-green text-xs tracking-widest hover:text-foreground transition-colors"
-            >
-              BREAKPROMPT
-            </Link>
-            <div className="flex items-center gap-4">
+          {/* nav */}
+          <header className="sticky top-0 z-50 border-b border-line-2 backdrop-blur-md bg-void/85">
+            <div className="mx-auto flex h-[62px] w-[min(1160px,92vw)] items-center gap-6">
               <Link
-                href="/leaderboard"
-                className="text-terminal-dim text-[0.65rem] uppercase tracking-widest hover:text-terminal-amber transition-colors"
+                href="/"
+                className="font-disp text-[17px] font-bold tracking-[.12em] flex items-center gap-2.5"
               >
-                BẢNG XẾP HẠNG
+                <span className="text-secret blink">&gt;_</span> BREAK
+                <b className="text-phosphor glow-strong">PROMPT</b>
               </Link>
-              <AuthButton />
+              <nav className="ml-auto flex items-center gap-1 max-sm:hidden">
+                <Link href="/how-to-play" className="nav-link">Cách chơi</Link>
+                <Link href="/levels" className="nav-link">Days</Link>
+                <Link href="/leaderboard" className="nav-link">Bảng xếp hạng</Link>
+              </nav>
+              <div className="flex items-center gap-4 max-sm:ml-auto">
+                <span className="hidden items-center gap-2 border-l border-line-2 pl-5 text-[11px] tracking-[.16em] text-ash-dim lg:flex">
+                  <span className="dot-live" /> HỆ THỐNG: TRỰC TUYẾN
+                </span>
+                <AuthButton />
+              </div>
             </div>
-          </nav>
-          {children}
+          </header>
+
+          <main className="relative z-[1]">{children}</main>
+
+          {/* footer */}
+          <footer className="mt-20 border-t border-line-2 py-8">
+            <div className="mx-auto flex w-[min(1160px,92vw)] flex-wrap items-center justify-between gap-5 text-xs text-ash-dim">
+              <div>
+                {"// "}
+                <b className="text-phosphor-dim">trochoi.id.vn</b> — BreakPrompt CTF · đánh lừa AI, moi bí mật.
+              </div>
+              <div className="flex gap-6 text-[11px] uppercase tracking-[.1em]">
+                <Link href="/" className="hover:text-phosphor transition-colors">Trang chủ</Link>
+                <Link href="/how-to-play" className="hover:text-phosphor transition-colors">Cách chơi</Link>
+                <Link href="/levels" className="hover:text-phosphor transition-colors">Days</Link>
+                <Link href="/leaderboard" className="hover:text-phosphor transition-colors">Xếp hạng</Link>
+              </div>
+            </div>
+          </footer>
         </Providers>
       </body>
     </html>

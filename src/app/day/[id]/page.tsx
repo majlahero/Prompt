@@ -68,7 +68,9 @@ export default function DayPage() {
         arr.push(dayNum);
         localStorage.setItem("guestCleared", JSON.stringify(arr));
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   useEffect(() => {
@@ -82,8 +84,6 @@ export default function DayPage() {
         // Check unlock: ngày 1 luôn mở, ngày N cần ngày N-1 đã cleared
         if (day > 1) {
           const prevLevel = levels.find((l) => l.dayNumber === day - 1);
-          // Logged-in user: dựa vào API cleared
-          // Guest: dựa vào localStorage
           if (prevLevel) {
             if (prevLevel.cleared === false) {
               setLocked(true);
@@ -93,7 +93,9 @@ export default function DayPage() {
                 const raw = localStorage.getItem("guestCleared");
                 const set = new Set<number>(raw ? JSON.parse(raw) : []);
                 if (!set.has(day - 1)) setLocked(true);
-              } catch { setLocked(true); }
+              } catch {
+                setLocked(true);
+              }
             }
           }
         }
@@ -172,7 +174,9 @@ export default function DayPage() {
         setScore(data.points);
         markGuestCleared(Number(dayNumber));
       }
-    } catch { /* ignore */ }
+    } catch {
+      /* ignore */
+    }
   }
 
   async function sendMessage() {
@@ -270,112 +274,119 @@ export default function DayPage() {
 
   if (!level) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-terminal-green animate-pulse">&gt;_ ĐANG TẢI DỮ LIỆU NHIỆM VỤ...</p>
+      <div className="flex min-h-[70vh] items-center justify-center">
+        <p className="animate-pulse text-phosphor glow">&gt;_ ĐANG TẢI DỮ LIỆU NHIỆM VỤ...</p>
       </div>
     );
   }
 
+  const dd = String(level.dayNumber).padStart(2, "0");
+  const advanced = level.tier === "ADVANCED";
+
   if (locked) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="border border-terminal-dim p-8 max-w-md text-center">
-          <p className="text-4xl mb-4">🔒</p>
-          <p className="text-terminal-green text-sm mb-2">NGÀY {String(level.dayNumber).padStart(2, "0")} — BỊ KHÓA</p>
-          <p className="text-terminal-dim text-sm mb-6">
-            Hoàn thành ngày {level.dayNumber - 1} trước để mở khóa nhiệm vụ này.
+      <div className="flex min-h-[70vh] items-center justify-center px-4">
+        <div className="frame max-w-md p-8 text-center">
+          <p className="mb-4 text-4xl">🔒</p>
+          <p className="mb-2 font-disp text-sm tracking-[.16em] text-phosphor glow">NGÀY {dd} — BỊ KHOÁ</p>
+          <p className="mb-6 text-sm text-ash-dim">
+            Hoàn thành ngày {level.dayNumber - 1} trước để mở khoá nhiệm vụ này.
           </p>
-          <Link
-            href="/levels"
-            className="border border-terminal-green px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors"
-          >
-            &lt; QUAY LẠI
-          </Link>
+          <Link href="/levels" className="btn btn--ghost">&lt; Quay lại</Link>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex flex-col px-4 py-6 max-w-4xl mx-auto">
+    <div className="page-fade mx-auto flex min-h-[70vh] w-[min(880px,92vw)] flex-col py-8">
       {/* Header */}
-      <div className="border border-terminal-dim p-4 mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <span className="text-terminal-green text-xs tracking-widest">
-            NGÀY {String(level.dayNumber).padStart(2, "0")} // {level.title.toUpperCase()}
+      <div className="frame p-4">
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <span className="font-disp text-[13px] font-bold tracking-[.18em] text-phosphor glow">
+            NGÀY {dd} <span className="text-phosphor-deep">{"//"}</span> {level.title.toUpperCase()}
           </span>
-          <span className={`text-[0.6rem] px-2 py-0.5 border ${
-            level.tier === "ADVANCED" ? "border-red-500 text-red-500" : "border-terminal-dim text-terminal-dim"
-          }`}>
-            {level.tier === "ADVANCED" ? "NÂNG CAO" : "CƠ BẢN"}
+          <span
+            className={`shrink-0 border px-2 py-0.5 text-[0.6rem] uppercase tracking-[.12em] ${
+              advanced ? "border-breach/60 text-breach" : "border-line text-ash-dim"
+            }`}
+          >
+            {advanced ? "Nâng cao" : "Cơ bản"}
           </span>
         </div>
-        <p className="text-terminal-dim text-sm leading-relaxed">{level.mission}</p>
+        <p className="text-sm leading-relaxed text-ash-dim">{level.mission}</p>
 
         {/* Stats bar */}
-        <div className="flex gap-6 mt-3 text-xs">
-          <span className="text-terminal-amber">THỜI GIAN: {formatTime(elapsed)}</span>
-          <span className="text-terminal-amber">SỐ LẦN: {tries}</span>
-          <span className="text-terminal-amber">GỢI Ý: {hintsUsed}/3</span>
-          <span className="text-terminal-amber">GỐC: {level.basePoints} ĐIỂM</span>
+        <div className="mt-3 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+          <span className="text-phosphor-dim">THỜI GIAN: <b className="text-phosphor">{formatTime(elapsed)}</b></span>
+          <span className="text-phosphor-dim">SỐ LẦN: <b className="text-phosphor">{tries}</b></span>
+          <span className="text-phosphor-dim">GỢI Ý: <b className="text-phosphor">{hintsUsed}/3</b></span>
+          <span className="text-phosphor-dim">GỐC: <b className="text-phosphor">{level.basePoints}</b> ĐIỂM</span>
         </div>
       </div>
 
-      {/* Mission Briefing */}
-      <div className="border border-terminal-green p-3 mb-4">
-        <p className="text-terminal-green text-xs tracking-widest mb-1">TÓM TẮT NHIỆM VỤ</p>
-        <p className="text-sm leading-relaxed">
-          {level.description}
-        </p>
+      {/* Mission briefing */}
+      <div className="mt-4 border-l-2 border-secret bg-secret/[.04] p-3">
+        <p className="mb-1 text-[11px] tracking-[.18em] text-secret">TÓM TẮT NHIỆM VỤ</p>
+        <p className="text-sm leading-relaxed text-ash">{level.description}</p>
       </div>
 
       {/* Hints */}
       {hints.length > 0 && (
-        <div className="border border-terminal-amber p-3 mb-4">
-          <p className="text-terminal-amber text-xs tracking-widest mb-2">GỢI Ý ĐÃ MỞ</p>
+        <div className="mt-4 border border-phosphor-dim/50 bg-phosphor/[.04] p-3">
+          <p className="mb-2 text-[11px] tracking-[.18em] text-phosphor">GỢI Ý ĐÃ MỞ</p>
           {hints.map((hint, i) => (
-            <p key={i} className="text-sm text-terminal-amber/90 mb-1">
-              [{i + 1}] {hint.content} <span className="text-red-500">(-{hint.pointPenalty} điểm)</span>
+            <p key={i} className="mb-1 text-sm text-phosphor-dim">
+              [{i + 1}] {hint.content} <span className="text-breach">(-{hint.pointPenalty} điểm)</span>
             </p>
           ))}
         </div>
       )}
 
-      {/* Chat Window */}
-      <div className="border border-terminal-dim flex-1 flex flex-col min-h-[300px] max-h-[400px] mb-4">
-        <div className="border-b border-terminal-dim px-3 py-1">
-          <span className="text-terminal-dim text-xs tracking-widest">TERMINAL // GIAO DIỆN PIP</span>
+      {/* Chat window */}
+      <div
+        className="term-scan mt-4 flex min-h-[320px] flex-1 flex-col overflow-hidden rounded-[3px] border border-line"
+        style={{ background: "linear-gradient(165deg,#100d07,#0a0805)" }}
+      >
+        <div className="relative z-[4] flex items-center gap-2.5 border-b border-line-2 bg-phosphor/[.03] px-3.5 py-2.5">
+          <div className="flex gap-1.5">
+            <i className="h-2.5 w-2.5 rounded-full border border-breach bg-breach" />
+            <i className="h-2.5 w-2.5 rounded-full border border-phosphor-deep bg-line" />
+            <i className="h-2.5 w-2.5 rounded-full border border-phosphor-deep bg-line" />
+          </div>
+          <span className="ml-1 text-[11.5px] tracking-[.1em] text-ash-dim">
+            pip@breakprompt: <b className="text-phosphor-dim">~/day-{dd}</b>
+          </span>
         </div>
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+
+        <div className="term-scroll relative z-[4] max-h-[400px] flex-1 space-y-2 overflow-y-auto p-4 text-sm">
           {messages.length === 0 && (
-            <p className="text-terminal-dim text-xs animate-pulse">
+            <p className="animate-pulse text-xs text-ash-dim">
               &gt;_ Đang chờ nhập liệu... Gõ một tin nhắn để bắt đầu thẩm vấn.
             </p>
           )}
           {messages.map((msg, i) => (
-            <div key={i} className="text-sm">
+            <div key={i} className="whitespace-pre-wrap break-words">
               {msg.role === "user" ? (
                 <p>
-                  <span className="text-terminal-green">&gt;_ </span>
-                  <span className="text-foreground">{msg.content}</span>
+                  <span className="text-secret">đáp&gt; </span>
+                  <span className="text-ash">{msg.content}</span>
                 </p>
               ) : (
                 <p>
-                  <span className="text-terminal-amber">PIP &gt; </span>
-                  <span className="text-terminal-dim">{msg.content}</span>
+                  <span className="text-phosphor glow">pip&gt; </span>
+                  <span className="text-ash-dim">{msg.content}</span>
                 </p>
               )}
             </div>
           ))}
-          {sending && (
-            <p className="text-terminal-amber text-sm animate-pulse">PIP &gt; ...</p>
-          )}
+          {sending && <p className="animate-pulse text-sm text-phosphor">pip&gt; <span className="cur align-[-3px]" /></p>}
           <div ref={chatEndRef} />
         </div>
 
-        {/* Chat Input */}
-        <div className="border-t border-terminal-dim flex">
-          <span className="text-terminal-green px-3 py-2 text-sm">&gt;_</span>
+        {/* Chat input */}
+        <div className="relative z-[4] flex border-t border-line-2 bg-black/25">
+          <span className="px-3.5 py-2.5 text-sm text-secret">đáp&gt;</span>
           <input
             type="text"
             value={chatInput}
@@ -383,23 +394,23 @@ export default function DayPage() {
             onKeyDown={(e) => e.key === "Enter" && sendMessage()}
             disabled={sending || solved}
             placeholder="Nhập tin nhắn..."
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-terminal-dim/50 disabled:opacity-50"
+            className="flex-1 bg-transparent text-sm text-ash outline-none placeholder:text-ash-dim/50 disabled:opacity-50"
           />
           <button
             onClick={sendMessage}
             disabled={sending || solved || !chatInput.trim()}
-            className="border-l border-terminal-dim px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-terminal-green"
+            className="border-l border-line-2 px-5 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor transition-colors hover:bg-phosphor hover:text-void disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-phosphor"
           >
-            GỬI
+            Gửi
           </button>
         </div>
       </div>
 
-      {/* Answer + Hint Row */}
-      <div className="flex gap-4 mb-4">
+      {/* Answer + hint row */}
+      <div className="mt-4 flex flex-wrap gap-4">
         {level.levelType !== "FORBIDDEN_WORD" ? (
-          <div className="flex-1 border border-terminal-dim flex">
-            <span className="text-terminal-amber px-3 py-2 text-sm">ĐÁP ÁN&gt;</span>
+          <div className="flex min-w-[240px] flex-1 border border-line bg-void-2">
+            <span className="px-3.5 py-2.5 text-sm text-phosphor glow">ĐÁP ÁN&gt;</span>
             <input
               type="text"
               value={answerInput}
@@ -407,96 +418,59 @@ export default function DayPage() {
               onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
               disabled={solved}
               placeholder={level.answerPlaceholder}
-              className="flex-1 bg-transparent text-sm outline-none placeholder:text-terminal-dim/50 disabled:opacity-50"
+              className="flex-1 bg-transparent text-sm text-ash outline-none placeholder:text-ash-dim/50 disabled:opacity-50"
             />
             <button
               onClick={submitAnswer}
               disabled={solved || !answerInput.trim()}
-              className="border-l border-terminal-dim px-4 py-2 text-xs uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors disabled:opacity-30"
+              className="border-l border-line px-5 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor transition-colors hover:bg-phosphor hover:text-void disabled:opacity-30"
             >
-              NỘP
+              Nộp
             </button>
           </div>
         ) : (
-          <div className="flex-1 border border-terminal-amber/40 px-4 py-2 text-sm text-terminal-amber/70">
+          <div className="flex min-w-[240px] flex-1 items-center border border-secret/40 bg-secret/[.04] px-4 py-2.5 text-sm text-secret">
             ⚡ Dụ AI nói từ cấm — không cần nhập đáp án. Khi AI lỡ miệng, bạn tự động thắng!
           </div>
         )}
         <button
           onClick={revealHint}
           disabled={solved || hintsUsed >= 3}
-          className="border border-terminal-amber px-4 py-2 text-xs uppercase tracking-widest text-terminal-amber hover:bg-terminal-amber hover:text-background transition-colors disabled:opacity-30"
+          className="border border-phosphor-dim px-4 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor-dim transition-colors hover:bg-phosphor/10 hover:text-phosphor disabled:opacity-30"
         >
-          GỢI Ý [{hintsUsed}/3]
+          Gợi ý [{hintsUsed}/3]
         </button>
       </div>
 
       {/* Error */}
-      {error && (
-        <p className="text-red-500 text-xs mb-4">&gt;_ LỖI: {error}</p>
-      )}
+      {error && <p className="mt-4 text-xs text-breach">&gt;_ LỖI: {error}</p>}
 
-      {/* Success Overlay */}
+      {/* Success overlay */}
       {solved && score && (
-        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-50">
-          <div className="border border-terminal-green p-8 max-w-md w-full mx-4">
-            <pre className="text-terminal-green text-xs text-center mb-4 select-none">
-{`
-██████╗ ██╗  ██╗ █████╗     ██████╗  █████╗  ██████╗
-██╔══██╗██║  ██║██╔══██╗    ██╔══██╗██╔══██╗██╔═══██╗
-██████╔╝███████║███████║    ██║  ██║███████║██║   ██║
-██╔═══╝ ██╔══██║██╔══██║    ██║  ██║██╔══██║██║   ██║
-██║     ██║  ██║██║  ██║    ██████╔╝██║  ██║╚██████╔╝
-╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝
-`}
-            </pre>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 px-4">
+          <div className="frame w-full max-w-md p-8" style={{ background: "linear-gradient(160deg,var(--color-panel),var(--color-void-2))" }}>
+            <p className="mb-1 text-center font-disp text-[11px] uppercase tracking-[.4em] text-secret">breach confirmed</p>
+            <h2 className="mb-6 text-center font-disp text-3xl font-bold text-phosphor glow-strong">PHÁ ĐẢO ✓</h2>
 
-            <p className="text-center text-terminal-green text-sm tracking-widest mb-6">
-              HOÀN THÀNH NGÀY {level.dayNumber}
-            </p>
+            <p className="mb-6 text-center text-sm tracking-[.16em] text-ash">HOÀN THÀNH NGÀY {level.dayNumber}</p>
 
-            <div className="space-y-2 text-sm mb-6">
-              <div className="flex justify-between">
-                <span className="text-terminal-dim">ĐIỂM GỐC</span>
-                <span className="text-foreground">{level.basePoints}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-terminal-dim">THƯỞNG THỜI GIAN</span>
-                <span className="text-terminal-green">+{score.timeBonus}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-terminal-dim">THƯỞNG SỐ LẦN</span>
-                <span className="text-terminal-green">+{score.triesBonus}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-terminal-dim">GIẢI SẠCH</span>
-                <span className="text-terminal-green">+{score.cleanSolveBonus}</span>
-              </div>
-              {score.hintPenalty > 0 && (
-                <div className="flex justify-between">
-                  <span className="text-terminal-dim">PHẠT GỢI Ý</span>
-                  <span className="text-red-500">-{score.hintPenalty}</span>
-                </div>
-              )}
-              <div className="border-t border-terminal-dim pt-2 flex justify-between">
-                <span className="text-terminal-amber uppercase tracking-widest">TỔNG</span>
-                <span className="text-terminal-amber text-lg">{score.totalPoints} ĐIỂM</span>
+            <div className="mb-6 space-y-2 text-sm">
+              <Row label="ĐIỂM GỐC" value={`${level.basePoints}`} tone="ash" />
+              <Row label="THƯỞNG THỜI GIAN" value={`+${score.timeBonus}`} tone="secret" />
+              <Row label="THƯỞNG SỐ LẦN" value={`+${score.triesBonus}`} tone="secret" />
+              <Row label="GIẢI SẠCH" value={`+${score.cleanSolveBonus}`} tone="secret" />
+              {score.hintPenalty > 0 && <Row label="PHẠT GỢI Ý" value={`-${score.hintPenalty}`} tone="breach" />}
+              <div className="flex items-center justify-between border-t border-line pt-2.5">
+                <span className="uppercase tracking-[.16em] text-phosphor-dim">TỔNG</span>
+                <span className="font-disp text-lg font-bold text-phosphor glow">{score.totalPoints} ĐIỂM</span>
               </div>
             </div>
 
-            <div className="flex gap-4 text-xs">
-              <Link
-                href="/levels"
-                className="flex-1 border border-terminal-dim px-4 py-2 text-center uppercase tracking-widest text-terminal-dim hover:border-foreground hover:text-foreground transition-colors"
-              >
-                VỀ DANH SÁCH
-              </Link>
+            <div className="flex gap-4">
+              <Link href="/levels" className="btn btn--dim flex-1">Về danh sách</Link>
               {level.dayNumber < 20 && (
-                <Link
-                  href={`/day/${level.dayNumber + 1}`}
-                  className="flex-1 border border-terminal-green px-4 py-2 text-center uppercase tracking-widest text-terminal-green hover:bg-terminal-green hover:text-background transition-colors"
-                >
-                  NGÀY TIẾP &gt;
+                <Link href={`/day/${level.dayNumber + 1}`} className="btn btn--primary flex-1">
+                  Ngày tiếp <span className="arw">→</span>
                 </Link>
               )}
             </div>
@@ -505,14 +479,21 @@ export default function DayPage() {
       )}
 
       {/* Back link */}
-      <div className="text-center">
-        <Link
-          href="/levels"
-          className="text-terminal-dim text-xs hover:text-foreground transition-colors"
-        >
-          &lt; VỀ DANH SÁCH
+      <div className="mt-6 text-center">
+        <Link href="/levels" className="text-xs text-ash-dim transition-colors hover:text-phosphor">
+          &lt; Về danh sách
         </Link>
       </div>
+    </div>
+  );
+}
+
+function Row({ label, value, tone }: { label: string; value: string; tone: "ash" | "secret" | "breach" }) {
+  const color = tone === "secret" ? "text-secret" : tone === "breach" ? "text-breach" : "text-ash";
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-ash-dim">{label}</span>
+      <span className={color}>{value}</span>
     </div>
   );
 }
