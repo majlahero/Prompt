@@ -21,6 +21,10 @@ const STEPS = [
     t: "Bí quá thì xin gợi ý",
     d: "Kẹt thật sự? Bấm GỢI Ý — tối đa 3 lần mỗi màn. Nhưng lưu ý: mỗi gợi ý sẽ trừ điểm, nên hãy để dành cho lúc thật cần.",
   },
+  {
+    t: "Chat lâu quá thì bấm CLEAR",
+    d: "Nếu chat quá lâu mà PIP vẫn không cho đáp án, nên dùng nút CLEAR (góc trên khung chat) để xoá hội thoại và bắt đầu một hội thoại mới. Đôi khi một khởi đầu sạch với cách tiếp cận khác lại hiệu quả hơn nhiều.",
+  },
 ];
 
 const TIPS = [

@@ -85,6 +85,31 @@ function checkRateLimit(ip: string): boolean {
   return entry.count <= RATE_LIMIT;
 }
 
+// DELETE: xoá sạch hội thoại của một game session (chỉ chủ session mới xoá được).
+// Chỉ xoá tin nhắn — giữ nguyên tries/hintsUsed/điểm.
+export async function DELETE(request: NextRequest) {
+  const sessionId = request.nextUrl.searchParams.get("sessionId");
+  if (!sessionId) {
+    return NextResponse.json({ error: "Missing sessionId" }, { status: 400 });
+  }
+
+  const authSession = await auth();
+  if (!authSession?.user?.id) {
+    return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
+  }
+
+  const gs = await prisma.gameSession.findUnique({
+    where: { id: sessionId },
+    select: { userId: true },
+  });
+  if (gs?.userId !== authSession.user.id) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  await prisma.chatMessage.deleteMany({ where: { sessionId } });
+  return NextResponse.json({ ok: true });
+}
+
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ?? "anonymous";
   if (!checkRateLimit(ip)) {

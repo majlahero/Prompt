@@ -187,6 +187,20 @@ export default function DayPage() {
     }
   }
 
+  async function clearChat() {
+    if (sending || solved || messages.length === 0) return;
+    setMessages([]);
+    setError("");
+    // Người dùng đã đăng nhập: xoá luôn hội thoại lưu trên server.
+    if (gameSessionId && authSession?.user?.id) {
+      try {
+        await fetch(`/api/chat?sessionId=${gameSessionId}`, { method: "DELETE" });
+      } catch {
+        /* non-critical */
+      }
+    }
+  }
+
   async function sendMessage() {
     if (!chatInput.trim() || !level || sending || solved) return;
 
@@ -362,9 +376,17 @@ export default function DayPage() {
             <i className="h-2.5 w-2.5 rounded-full border border-phosphor-deep bg-line" />
             <i className="h-2.5 w-2.5 rounded-full border border-phosphor-deep bg-line" />
           </div>
-          <span className="ml-1 text-[11.5px] tracking-[.1em] text-ash-dim">
+          <span className="ml-1 truncate text-[11.5px] tracking-[.1em] text-ash-dim">
             pip@breakprompt: <b className="text-phosphor-dim">~/day-{dd}</b>
           </span>
+          <button
+            onClick={clearChat}
+            disabled={sending || solved || messages.length === 0}
+            title="Xoá sạch hội thoại và bắt đầu lại"
+            className="ml-auto shrink-0 rounded-[3px] border border-line px-2.5 py-1 text-[10px] uppercase tracking-[.12em] text-ash-dim transition-colors hover:border-breach/60 hover:text-breach disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ash-dim"
+          >
+            ✕ Clear
+          </button>
         </div>
 
         <div ref={chatScrollRef} className="term-scroll relative z-[4] max-h-[400px] flex-1 space-y-2 overflow-y-auto p-4 text-sm">
@@ -377,7 +399,7 @@ export default function DayPage() {
             <div key={i} className="whitespace-pre-wrap break-words">
               {msg.role === "user" ? (
                 <p>
-                  <span className="text-secret">đáp&gt; </span>
+                  <span className="text-secret">Bạn&gt; </span>
                   <span className="text-ash">{msg.content}</span>
                 </p>
               ) : (
@@ -393,7 +415,7 @@ export default function DayPage() {
 
         {/* Chat input */}
         <div className="relative z-[4] flex items-center gap-2.5 border-t border-line-2 bg-black/30 px-3.5 py-2.5 transition-colors focus-within:border-phosphor-dim focus-within:bg-phosphor/[.05]">
-          <span className="shrink-0 select-none text-sm font-medium text-secret [text-shadow:0_0_8px_rgba(0,231,211,.35)]">đáp&gt;</span>
+          <span className="shrink-0 select-none text-sm font-medium text-secret [text-shadow:0_0_8px_rgba(0,231,211,.35)]">Bạn&gt;</span>
           <input
             type="text"
             value={chatInput}
@@ -414,9 +436,9 @@ export default function DayPage() {
       </div>
 
       {/* Answer + hint row */}
-      <div className="mt-4 flex flex-wrap gap-4">
+      <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch sm:gap-4">
         {level.levelType !== "FORBIDDEN_WORD" ? (
-          <div className="flex min-w-[240px] flex-1 items-center gap-2.5 rounded-[3px] border border-line bg-void-2 px-3.5 py-1.5 transition-colors focus-within:border-phosphor-dim focus-within:bg-phosphor/[.03] focus-within:shadow-[0_0_0_1px_rgba(255,176,0,.15)]">
+          <div className="flex w-full min-w-0 items-center gap-2.5 rounded-[3px] border border-line bg-void-2 px-3.5 py-1.5 transition-colors focus-within:border-phosphor-dim focus-within:bg-phosphor/[.03] focus-within:shadow-[0_0_0_1px_rgba(255,176,0,.15)] sm:w-auto sm:min-w-[240px] sm:flex-1">
             <span className="shrink-0 select-none text-sm font-medium text-phosphor glow">ĐÁP ÁN&gt;</span>
             <input
               type="text"
@@ -425,7 +447,7 @@ export default function DayPage() {
               onKeyDown={(e) => e.key === "Enter" && submitAnswer()}
               disabled={solved}
               placeholder={level.answerPlaceholder}
-              className="flex-1 bg-transparent py-1 text-sm text-ash outline-none [caret-color:var(--color-phosphor)] placeholder:text-ash-dim/40 disabled:opacity-50"
+              className="w-full min-w-0 flex-1 bg-transparent py-1 text-sm text-ash outline-none [caret-color:var(--color-phosphor)] placeholder:text-ash-dim/40 disabled:opacity-50"
             />
             <button
               onClick={submitAnswer}
@@ -436,14 +458,14 @@ export default function DayPage() {
             </button>
           </div>
         ) : (
-          <div className="flex min-w-[240px] flex-1 items-center border border-secret/40 bg-secret/[.04] px-4 py-2.5 text-sm text-secret">
+          <div className="flex w-full min-w-0 items-center border border-secret/40 bg-secret/[.04] px-4 py-2.5 text-sm text-secret sm:w-auto sm:min-w-[240px] sm:flex-1">
             ⚡ Dụ AI nói từ cấm — không cần nhập đáp án. Khi AI lỡ miệng, bạn tự động thắng!
           </div>
         )}
         <button
           onClick={revealHint}
           disabled={solved || hintsUsed >= 3}
-          className="border border-phosphor-dim px-4 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor-dim transition-colors hover:bg-phosphor/10 hover:text-phosphor disabled:opacity-30"
+          className="w-full shrink-0 border border-phosphor-dim px-4 py-2.5 text-xs uppercase tracking-[.12em] text-phosphor-dim transition-colors hover:bg-phosphor/10 hover:text-phosphor disabled:opacity-30 sm:w-auto"
         >
           Gợi ý [{hintsUsed}/3]
         </button>
