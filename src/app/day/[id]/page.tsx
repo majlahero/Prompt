@@ -383,9 +383,22 @@ export default function DayPage() {
             onClick={clearChat}
             disabled={sending || solved || messages.length === 0}
             title="Xoá sạch hội thoại và bắt đầu lại"
-            className="ml-auto shrink-0 rounded-[3px] border border-line px-2.5 py-1 text-[10px] uppercase tracking-[.12em] text-ash-dim transition-colors hover:border-breach/60 hover:text-breach disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ash-dim"
+            className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-[3px] border border-line px-2.5 py-1 text-[10px] uppercase tracking-[.12em] text-ash-dim transition-colors hover:border-breach/60 hover:text-breach disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:border-line disabled:hover:text-ash-dim"
           >
-            ✕ Clear
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="h-3 w-3"
+              aria-hidden="true"
+            >
+              <path d="M21 12a9 9 0 1 1-2.64-6.36" />
+              <path d="M21 3v5h-5" />
+            </svg>
+            Clear
           </button>
         </div>
 
